@@ -1,0 +1,75 @@
+@use '../../styles/variables.scss' as vars;
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .logo {
+      font-size: 20px;
+    }
+
+    .title {
+      color: vars.$dark-primary-color;
+      font-weight: 700;
+      font-size: 18px;
+      line-height: 32px;
+      font-family: vars.$font-secondary;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .search {
+      width: 200px;
+    }
+
+    .icon {
+      font-size: 14px;
+      cursor: pointer;
+      color: vars.$dark-primary-color;
+
+      .ant-badge-count {
+        font-size: 12px;
+        height: 20px;
+        left: -10px;
+        top: -7px;
+        padding-left: 7px;
+        min-width: 28px;
+        color: vars.$dark-primary-color;
+      }
+    }
+
+    .badge-icon {
+      font-size: 14px;
+      left: 20px;
+    }
+
+    .avatar {
+      display: flex;
+      align-items: center;
+      gap: '8px';
+
+      .text {
+        font-size: 14px;
+        line-height: 22px;
+        margin-left: 12px;
+        font-weight: 400;
+        color: vars.$dark-primary-color;
+        font-family: vars.$font-primary;
+      }
+    }
+  }
+}

@@ -8,3 +8,14 @@ body {
 .h1-style {
   color: vars.$primary-color;
 }
+
+.app {
+  display: flex;
+  gap: 20px;
+  flex-direction: column;
+}
+.page-wrapper {
+  display: flex;
+  gap: 20px;
+  min-height: 100vh;
+}

@@ -1,0 +1,43 @@
+@use '../../styles/variables.scss' as var;
+
+.dashboard-page {
+  width: 100%;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 20px;
+
+  .dashboard-header,
+  .dashboard-content {
+    background: var.$white;
+    width: 100%;
+  }
+  .dashboard-header {
+    padding: 16px 24px;
+    gap: 20px;
+
+    .ant-tab {
+      margin-bottom: 20px;
+    }
+    .dashboard-header-top {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+
+      .new-match-btn {
+        border: none;
+        font-size: 14px;
+        line-height: 22px;
+        font-weight: 400;
+        border-radius: 0px;
+      }
+    }
+  }
+
+  .dashboard-content {
+    flex: 1;
+    background: var.$white;
+    padding: 16px;
+    overflow-y: auto;
+  }
+}

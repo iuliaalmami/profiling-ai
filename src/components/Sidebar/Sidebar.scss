@@ -1,0 +1,33 @@
+@use '../../styles/variables.scss' as var;
+
+.sidebar {
+  width: 208px;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.15);
+  background: var.$white;
+
+  .nav-link {
+    font-family: var.$font-primary;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    text-decoration: none;
+    color: var.$blue;
+    padding: 13px 16px;
+    font-family: 14px;
+    line-height: 22px;
+    font-weight: 400;
+
+    &.active {
+      background-color: var.$light-blue;
+    }
+
+    .dashboard-icon,
+    .profiles-icon {
+      color: var.$blue;
+    }
+  }
+}

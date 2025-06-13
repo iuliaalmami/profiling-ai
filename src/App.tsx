@@ -1,16 +1,27 @@
-import headerLogo from './assets/global-header.png';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.scss';
-import { Button } from 'antd';
+import Sidebar from './components/Sidebar/Sidebar';
 import './index.scss';
+import Dashboard from './pages/Dashboard/Dashboard';
+import Profile from './pages/Profile/Profile';
+import Header from './components/Header/Header';
+import JobDescription from './components/JobDescription/JobDescription';
 
 function App() {
   return (
     <>
       <div className="app">
-        <h1 className="h1-style">Profiling AI Project</h1>
-        <img src={headerLogo} className="logo" alt="Vite logo" />
+        <Header />
 
-        <Button type="primary">Test button</Button>
+        <div className="page-wrapper">
+          <Sidebar />
+
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profiles" element={<Profile />} />
+          </Routes>
+        </div>
       </div>
     </>
   );
