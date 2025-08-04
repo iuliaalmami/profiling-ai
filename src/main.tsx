@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
-import 'antd/dist/reset.css'; // sau 'antd/dist/antd.css' pentru versiuni mai vechi
-import './index.scss'; // Importați fișierul SCSS global
+import 'antd/dist/reset.css';
+import './index.scss';
 import App from './App.tsx';
 import { BrowserRouter } from 'react-router-dom';
 

@@ -1,0 +1,20 @@
+@use '../../styles/variables.scss' as vars;
+
+.markdown-renderer {
+  padding: 12px;
+  border-radius: 6px;
+  background-color: vars.$light-grey;
+  color: vars.$light-black;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  p {
+    &:nth-child(2) {
+      font-weight: 700;
+      padding: 16px;
+      border-radius: 4px;
+      margin-left: 8px;
+      background-color: vars.$white;
+    }
+  }
+}

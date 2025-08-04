@@ -1,0 +1,103 @@
+@use '../../styles/variables.scss' as vars;
+
+.matches-layout {
+  display: flex;
+  flex-direction: row;
+
+  .matches-left {
+    flex: 3;
+    padding: 0 24px;
+
+    .matches-left-header {
+      padding: 16px 24px;
+      background: vars.$white;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      h4 {
+        font-family: vars.$font-primary;
+        font-size: 20px;
+        color: vars.$light-black-2;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .matches-right {
+    flex: 1;
+    border-left: 1px solid #f0f0f0;
+    overflow-y: auto;
+    background: #fafafa;
+  }
+
+  .ant-table {
+    font-size: 14px;
+
+    .ant-table-thead > tr > th {
+      font-weight: 500;
+      background-color: #fafafa;
+    }
+
+    .ant-table-tbody > tr {
+      height: 64px;
+    }
+
+    .ant-table-tbody > tr > td {
+      vertical-align: middle;
+      padding: 16px 8px;
+    }
+  }
+
+  .custom-row-spacing {
+    td {
+      padding-top: 12px !important;
+      padding-bottom: 12px !important;
+    }
+  }
+
+  .match-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+
+    &::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    &.green::before {
+      background-color: #52c41a;
+    }
+
+    &.orange::before {
+      background-color: #faad14;
+    }
+
+    &.red::before {
+      background-color: #f5222d;
+    }
+
+    &.blue::before {
+      background-color: #1890ff;
+    }
+  }
+
+  .ant-btn-link {
+    padding: 0;
+    font-weight: 500;
+  }
+
+  .remove-link {
+    color: #f5222d;
+  }
+
+  .details-link {
+    color: #1890ff;
+  }
+}

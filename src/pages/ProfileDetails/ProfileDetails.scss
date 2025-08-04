@@ -1,0 +1,196 @@
+@use '../../styles/variables.scss' as vars;
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+
+  .profile-details-header {
+    padding: 16px 24px;
+    background: vars.$white;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .profile-details-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .profile-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .candidate-name {
+          margin: 0;
+          font-size: 18px;
+          font-weight: 600;
+        }
+
+        .candidate-meta {
+          margin: 0;
+          font-size: 13px;
+          color: vars.$grey;
+        }
+      }
+
+      .export-cv-btn {
+        background-color: #1890ff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+
+        &:hover {
+          background-color: #1677c0;
+        }
+      }
+    }
+  }
+
+  .profile-details-content {
+    display: flex;
+    gap: 16px;
+
+    .profile-details-content-left {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 16px;
+
+      .job-match-card {
+        padding: 16px;
+        background: vars.$white;
+
+        .job-match-info {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+
+          .job-title {
+            font-weight: 600;
+            color: vars.$grey;
+          }
+
+          .job-role {
+            font-size: 16px;
+            font-weight: 500;
+            display: block;
+          }
+
+          .match-score {
+            font-size: 14px;
+            color: vars.$light-black-2;
+
+            span {
+              font-weight: 600;
+              color: green;
+            }
+          }
+        }
+
+        .job-description {
+          margin-top: 8px;
+          font-size: 14px;
+          color: vars.$grey;
+        }
+      }
+
+      .contact-info-card {
+        padding: 16px;
+        background: vars.$white;
+        border-radius: 8px;
+
+        .info-row {
+          display: flex;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 24px;
+
+          .label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: vars.$light-black-2;
+          }
+
+          .value,
+          a {
+            font-size: 14px;
+            color: vars.$grey;
+          }
+
+          a {
+            color: #1890ff;
+            text-decoration: none;
+
+            &:hover {
+              text-decoration: underline;
+            }
+          }
+        }
+      }
+
+      .summary-card {
+        padding: 16px;
+        background: vars.$white;
+        border-radius: 8px;
+
+        h5 {
+          font-size: 16px;
+          font-weight: 600;
+          margin-bottom: 8px;
+        }
+
+        p {
+          font-size: 14px;
+          color: vars.$grey;
+          line-height: 1.6;
+        }
+      }
+
+      .expertise-industries {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        .expertise-card,
+        .industries-card {
+          flex: 1;
+          padding: 16px;
+          background: vars.$white;
+          border-radius: 8px;
+
+          h5 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+          }
+
+          ul {
+            list-style-type: disc;
+            padding-left: 20px;
+
+            li {
+              font-size: 14px;
+              color: vars.$grey;
+              margin-bottom: 4px;
+            }
+          }
+        }
+      }
+    }
+
+    .profile-details-content-right {
+      width: 300px;
+    }
+  }
+}
+
+.ant-card {
+  border-radius: 0 !important;
+}

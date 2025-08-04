@@ -1,0 +1,296 @@
+@use '../../styles/variables.scss' as vars;
+
+.ai-chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #fff;
+
+  .chat-header-wrapper {
+    border-bottom: 1px solid vars.$light-grey;
+    padding: 16px 24px;
+
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      h3 {
+        font-size: 16px;
+        line-height: 24px;
+        font-family: vars.$font-primary;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .chat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .chat-heading {
+      margin: 24px;
+      text-align: center;
+
+      h2 {
+        font-size: 24px;
+        line-height: 1;
+        font-family: vars.$font-secondary;
+        margin-bottom: 24px;
+      }
+
+      p {
+        font-size: 16px;
+        line-height: 32px;
+        font-family: vars.$font-primary;
+        color: rgba(0, 0, 0, 0.87);
+      }
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 8px;
+      padding: 0 16px;
+
+      .chat-bubble {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: 14px;
+        line-height: 22px;
+        font-family: vars.$font-primary;
+        letter-spacing: -2%;
+
+        &.user {
+          align-self: flex-end;
+
+          span {
+            padding: 12px;
+            border-radius: 6px;
+            background-color: vars.$light-blue;
+          }
+
+          .chat-icon {
+            order: 2;
+          }
+        }
+
+        &.ai {
+          align-self: flex-start;
+          gap: 8px;
+          flex-direction: row;
+          display: flex;
+          width: 1270px;
+          max-width: 100%;
+          span {
+            &:nth-of-type(2) {
+              background-color: vars.$light-grey;
+              padding: 12px;
+            }
+          }
+        }
+
+        .assistant {
+          align-self: flex-start;
+          background-color: vars.$light-grey;
+          gap: 8px;
+          padding: 12px;
+          flex-direction: column;
+          display: flex;
+          width: 1270px;
+          max-width: 100%;
+          .assistant-message-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+          }
+          .assistant-final-prompt {
+            flex-direction: column;
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            background-color: vars.$white;
+            color: vars.$light-black;
+            display: flex;
+            flex-direction: column;
+          }
+          .search-matches-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-end;
+          }
+        }
+
+        .chat-icon {
+          font-size: 18px;
+          color: rgba(0, 0, 0, 0.45);
+        }
+
+        .prompt-highlight {
+          margin-top: 12px;
+          font-weight: 500;
+          background: #fafafa;
+          border-left: 4px solid #1890ff;
+          padding: 12px;
+          border-radius: 6px;
+        }
+      }
+    }
+
+    .chat-suggestions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 24px;
+
+      .chat-suggestion-wrapper {
+        display: flex;
+        flex-direction: row;
+        background-color: vars.$light-blue;
+        transition: background-color 0.2s ease;
+        justify-content: space-between;
+        cursor: pointer;
+        padding: 12px;
+
+        &:hover {
+          background-color: #d4ecfa;
+        }
+      }
+
+      button {
+        text-align: left;
+        border: none;
+        padding: 12px;
+        font-size: 16px;
+        font-family: vars.$font-primary;
+        border-radius: 6px;
+        background-color: transparent;
+
+        &:hover {
+          background-color: transparent;
+        }
+      }
+    }
+
+    .chat-input {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      padding: 12px 24px;
+      background-color: #fff;
+
+      input {
+        flex: 1;
+        border-radius: 4px;
+      }
+
+      button {
+        min-width: 40px;
+        border-radius: 4px;
+      }
+    }
+  }
+}
+
+.matches-layout {
+  display: flex;
+  gap: 16px;
+  // padding: 32px;
+  background-color: #f5f5f7;
+
+  .matches-left {
+    flex: 3;
+    background: #ffffff;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+
+    .matches-left-header {
+      margin-bottom: 32px;
+      .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f1f1f;
+        margin-bottom: 12px;
+      }
+    }
+
+    .ant-table-wrapper {
+      .ant-table {
+        border-radius: 8px;
+
+        .ant-table-thead > tr > th {
+          background: #fafafa;
+          font-weight: 500;
+          font-size: 13px;
+          color: #8c8c8c;
+          padding: 12px 16px;
+          border-bottom: 1px solid #eaeaea;
+        }
+
+        .ant-table-tbody > tr > td {
+          padding: 16px;
+          font-size: 14px;
+          color: #1f1f1f;
+          vertical-align: middle;
+          border-bottom: 1px solid #f0f0f0;
+
+          a.details-link {
+            color: #1677ff;
+          }
+
+          a.remove-link {
+            color: #ff4d4f;
+          }
+        }
+
+        .ant-table-tbody > tr:hover > td {
+          background-color: #fafafa;
+        }
+      }
+    }
+  }
+
+  .matches-right {
+    flex: 1;
+    background: #ffffff;
+  }
+}
+
+.match-dot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  &.green::before {
+    background-color: #52c41a;
+  }
+
+  &.blue::before {
+    background-color: #1890ff;
+  }
+
+  &.orange::before {
+    background-color: red !important;
+  }
+
+  &.red::before {
+    background-color: red;
+  }
+}

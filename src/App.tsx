@@ -5,7 +5,9 @@ import './index.scss';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Profile from './pages/Profile/Profile';
 import Header from './components/Header/Header';
-import JobDescription from './components/JobDescription/JobDescription';
+import NewMatchPage from './pages/NewMatch/NewMatch';
+import ProfileMatch from './pages/ProfileMatch/ProfileMatch';
+import ProfileDetails from './pages/ProfileDetails/ProfileDetails';
 
 function App() {
   return (
@@ -20,6 +22,9 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profiles" element={<Profile />} />
+            <Route path="chat/:id" element={<NewMatchPage />} />
+            <Route path="/matches" element={<ProfileMatch />} />
+            <Route path="/profile-details" element={<ProfileDetails />} />
           </Routes>
         </div>
       </div>

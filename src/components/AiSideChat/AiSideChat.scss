@@ -1,0 +1,141 @@
+@use '../../styles/variables.scss' as vars;
+
+.matches-right {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+  border-left: 1px solid #f0f0f0;
+}
+
+.ai-chat-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  padding: 16px;
+}
+
+.ai-chat-header {
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
+.ai-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ai-input {
+  flex-shrink: 0;
+
+  .ant-input {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .ant-input-suffix {
+    color: #888;
+
+    &:hover {
+      color: #1890ff;
+    }
+  }
+}
+
+aside {
+  width: auto !important;
+  max-width: inherit !important;
+}
+
+.ai-assistant-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  font-family: vars.$font-primary;
+  height: 100vh;
+
+  h5 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .ai-assistant-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 24px;
+
+    .ai-icon {
+      font-size: 24px;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .ant-typography {
+      margin: 0;
+    }
+  }
+
+  .ai-suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: auto;
+
+    .ai-suggestion-tile {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      background-color: #f5f7ff;
+      border: none;
+      font-weight: 500;
+      text-align: left;
+      padding: 12px;
+      border-radius: 8px;
+      line-height: 1.4;
+      white-space: normal;
+      word-break: break-word;
+      width: 100%;
+      height: 100%;
+      .anticon {
+        flex-shrink: 0;
+        margin-top: 4px;
+      }
+    }
+  }
+
+  .ai-input {
+    margin-top: 16px;
+    flex-shrink: 0;
+    position: fixed;
+    bottom: 24px;
+
+    width: 18%;
+
+    .ant-input {
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    .ant-input-suffix {
+      color: #888;
+
+      &:hover {
+        color: #1890ff;
+      }
+    }
+  }
+}
