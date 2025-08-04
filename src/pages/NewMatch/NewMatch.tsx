@@ -1,12 +1,13 @@
 import { Button, Typography, Breadcrumb } from 'antd';
 import './NewMatch.scss';
-import AiChat from '../../components/AISideBar/AiChat';
+import AiChat from '../../components/AiChat/AiChat';
 import { useNavigate } from 'react-router-dom';
 
 const NewMatchPage = () => {
   const navigate = useNavigate();
 
   const handleCancel = () => {
+    sessionStorage.removeItem('chatId');
     navigate('/dashboard');
   };
 

@@ -1,32 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-export function useChatHistory(chatId: string) {
+export function useChatHistory(chatId: string, disabled = false) {
   const [initialMessages, setInitialMessages] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
   useEffect(() => {
-    const loadChatHistory = async () => {
-      if (chatId === '') {
-        setInitialMessages([]);
-        setIsLoadingHistory(false);
-        return;
-      }
+    if (disabled || chatId === '') {
+      setInitialMessages([]);
+      setIsLoadingHistory(false);
+      return;
+    }
 
+    const loadChatHistory = async () => {
       try {
         const headers: HeadersInit = {
           'Content-Type': 'application/json',
         };
-        console.log('Loading chat history for testtttt:', chatId);
         const response = await fetch(`http://127.0.0.1:8000/api/v1/chat/history/${chatId}`, {
           headers,
         });
-        console.log('Loading chat history for:', chatId);
+
+        console.log('[chat] loading history for chatId:', response);
         if (response.ok) {
           const history = await response.json();
-          console.log('Chat history loaded:', history);
           setInitialMessages(history);
-        } else {
-          console.warn('Failed to load chat history:', response.status);
         }
       } catch (error) {
         console.error('Error loading chat history:', error);
@@ -36,7 +33,7 @@ export function useChatHistory(chatId: string) {
     };
 
     loadChatHistory();
-  }, [chatId]);
+  }, [chatId, disabled]);
 
   return [initialMessages, isLoadingHistory] as const;
 }

@@ -96,6 +96,13 @@
           }
         }
 
+        .assistant-message-content {
+          display: flex;
+          flex-direction: row;
+          gap: 8px;
+          align-items: flex-start;
+        }
+
         .assistant {
           align-self: flex-start;
           background-color: vars.$light-grey;

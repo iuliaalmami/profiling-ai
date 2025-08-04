@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input, Button, type InputRef } from 'antd';
 import { SendOutlined, UserOutlined, RobotOutlined, RightOutlined } from '@ant-design/icons';
-import { useChat } from '@ai-sdk/react';
+import { useChat, type Message } from '@ai-sdk/react';
 import './AIChat.scss';
 import { Markdown } from '../Markdown/Markdown';
 import { useNavigate } from 'react-router-dom';
@@ -22,42 +22,41 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
   const inputRef = useRef<InputRef>(null);
   const navigate = useNavigate();
 
+  const isChatFromUrl = !!initialChatId;
   const [chatId, setChatId] = useState<string | null>(() => {
-    return initialChatId || sessionStorage.getItem('chatId') || null;
+    return isChatFromUrl ? initialChatId : sessionStorage.getItem('chatId');
   });
+  const [isStartingFresh, setIsStartingFresh] = useState(!isChatFromUrl);
 
-  useEffect(() => {
-    if (chatId) {
-      sessionStorage.setItem('chatId', chatId);
-    }
-  }, [chatId]);
+  const [initialMessages, isLoadingHistory] = useChatHistory(chatId ?? '', isStartingFresh);
 
-  const [initialMessages, isLoadingHistory] = useChatHistory(chatId ?? '');
+  const { messages, input, handleInputChange, handleSubmit, append, setMessages, setInput } =
+    useChat({
+      id: chatId ?? undefined,
+      api: 'http://127.0.0.1:8000/api/v1/smart-chat/stream',
+      initialMessages: initialMessages as Message[],
+      onResponse: async response => {
+        const newChatId = response.headers.get('x-chat-id');
+        if (newChatId && !chatId) {
+          setChatId(newChatId);
+          sessionStorage.setItem('chatId', newChatId);
+        }
+      },
+      experimental_prepareRequestBody({ messages }) {
+        const lastMessage = messages[messages.length - 1];
+        const body: any = { message: lastMessage?.content ?? '' };
 
-  const { messages, input, handleInputChange, handleSubmit, append } = useChat({
-    id: chatId ?? undefined,
-    api: 'http://127.0.0.1:8000/api/v1/smart-chat/stream',
-    initialMessages,
-    onResponse: async response => {
-      const newChatId = response.headers.get('x-chat-id');
-      console.log('Received x-chat-id:', newChatId);
-      if (newChatId && !chatId) {
-        console.log('Received x-chat-id:', newChatId);
-        setChatId(newChatId);
-        sessionStorage.setItem('chatId', newChatId);
-      }
-    },
-    experimental_prepareRequestBody({ messages, id }) {
-      const lastMessage = messages[messages.length - 1];
-      const body: any = { message: lastMessage.content };
+        const storedChatId = sessionStorage.getItem('chatId');
+        if (storedChatId && /^\d+$/.test(storedChatId)) {
+          body.id = parseInt(storedChatId, 10);
+        } else {
+          body.id = '';
+        }
 
-      if (id && id !== '' && id !== 'undefined' && id.length >= 8) {
-        body.id = id;
-      }
-
-      return body;
-    },
-  });
+        console.log('[chat] payload trimis:', body);
+        return body;
+      },
+    });
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -78,9 +77,34 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
     }
   };
 
-  const handleSuggestionClick = (text: string) => {
-    append({ role: 'user', content: text });
-    handleSubmit(new Event('submit'), { data: { content: text } });
+  const sendMessageSafely = async (text: string) => {
+    setInput(text);
+    setTimeout(() => {
+      void handleSubmit(new Event('submit'), { data: { content: text } });
+    }, 10);
+  };
+
+  const startNewChatWithMessage = async (text: string) => {
+    sessionStorage.removeItem('chatId');
+    setChatId(null);
+    setIsStartingFresh(true);
+    setMessages([]);
+    await sendMessageSafely(text);
+  };
+
+  const handleSuggestionClick = async (text: string) => {
+    await startNewChatWithMessage(text);
+  };
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    if (!chatId) {
+      await startNewChatWithMessage(input);
+    } else {
+      await sendMessageSafely(input);
+    }
   };
 
   const handleSearchMatches = () => {
@@ -89,7 +113,6 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
       .find(msg => msg.role === 'assistant' && extractTextParts(msg.content).prompt);
 
     const prompt = extractTextParts(lastAssistantWithPrompt?.content || '').prompt;
-
     if (prompt) {
       navigate('/matches', { state: { prompt } });
     }
@@ -120,12 +143,14 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
 
             <div className="chat-suggestions">
               {suggestions.map((text, idx) => (
-                <div
-                  className="chat-suggestion-wrapper"
-                  key={idx}
-                  onClick={() => handleSuggestionClick(text)}
-                >
-                  <Button>{text}</Button>
+                <div className="chat-suggestion-wrapper" key={idx}>
+                  <Button
+                    onClick={() => {
+                      void handleSuggestionClick(text);
+                    }}
+                  >
+                    {text}
+                  </Button>
                   <RightOutlined className="chat-icon" />
                 </div>
               ))}
@@ -138,9 +163,7 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
             const { response, prompt } =
               msg.role === 'assistant' ? extractTextParts(msg.content) : {};
 
-            const bubbleClass = `chat-bubble ${msg.role}${
-              msg.role === 'assistant' && prompt ? ' assistant-final-prompt' : ''
-            }`;
+            const bubbleClass = `chat-bubble ${msg.role}${msg.role === 'assistant' && prompt ? ' assistant-final-prompt' : ''}`;
 
             return (
               <div key={idx} className={bubbleClass}>
@@ -159,7 +182,6 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
                           Otherwise, click “Search Matches” to begin.
                           <br />
                           <em>
-                            {' '}
                             Note: Once the search starts, the job description can no longer be
                             edited.
                           </em>
@@ -181,14 +203,13 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
           })}
         </div>
 
-        <form onSubmit={handleSubmit} className="chat-input">
+        <form onSubmit={handleManualSubmit} className="chat-input">
           <Input
             ref={inputRef}
             placeholder="Type your message here"
             value={input}
             onChange={handleInputChange}
           />
-
           <Button type="primary" icon={<SendOutlined />} htmlType="submit">
             Send
           </Button>
