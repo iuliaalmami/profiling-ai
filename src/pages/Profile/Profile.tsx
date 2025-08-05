@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb, Modal, Upload, message } from 'antd';
+import {
+  Table,
+  Button,
+  Layout,
+  Typography,
+  Space,
+  Row,
+  Col,
+  Breadcrumb,
+  Modal,
+  Upload,
+  message,
+} from 'antd';
 import type { ColumnsType, SortOrder } from 'antd/es/table/interface';
 import { InboxOutlined } from '@ant-design/icons';
 import './Profile.scss';
@@ -27,32 +39,31 @@ const ProfilePage = () => {
     const fetchProfiles = async () => {
       setLoading(true);
       try {
-        console.log(`[profiles] Fetching all profiles from /api/v1/profiles`);
-        
         const profilesRes = await fetch(`http://127.0.0.1:8000/api/v1/profiles`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
-        
+
         if (!profilesRes.ok) {
           throw new Error(`Failed to fetch profiles: ${profilesRes.status}`);
         }
-        
+
         const profilesData = await profilesRes.json();
-        console.log('[profiles] ===== RAW PROFILES DATA =====');
-        console.log('[profiles] Full response:', JSON.stringify(profilesData, null, 2));
-        
+
         // Process profiles data - assuming it's an array of profile objects
         if (Array.isArray(profilesData)) {
           const processedProfiles = profilesData.map(profile => ({
             id: profile.id?.toString() || profile.cv_id?.toString() || 'unknown',
             name: profile.name || 'Unknown',
             role: extractRole(profile),
-            last_updated: profile.last_update || profile.updated_at || profile.created_at || new Date().toISOString(),
-            skills: profile.skills || []
+            last_updated:
+              profile.last_update ||
+              profile.updated_at ||
+              profile.created_at ||
+              new Date().toISOString(),
+            skills: profile.skills || [],
           }));
-          
-          console.log('[profiles] Processed profiles:', processedProfiles);
+
           setProfiles(processedProfiles);
         } else {
           console.error('[profiles] Expected array but got:', typeof profilesData);
@@ -94,13 +105,11 @@ const ProfilePage = () => {
     setUploading(true);
     try {
       const formData = new FormData();
-      
+
       // Add all files to FormData
-      fileList.forEach((file) => {
+      fileList.forEach(file => {
         formData.append('file', file);
       });
-
-      console.log(`[profiles] Uploading ${fileList.length} CV files to /api/v1/upload-cv`);
 
       const response = await fetch('http://127.0.0.1:8000/api/v1/upload-cv', {
         method: 'POST',
@@ -109,9 +118,8 @@ const ProfilePage = () => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('[profiles] Upload successful:', result);
         message.success(`Successfully uploaded ${fileList.length} CV file(s)`);
-        
+
         // Close modal and refresh profiles
         handleModalClose();
         // Refresh the profiles list
@@ -140,7 +148,7 @@ const ProfilePage = () => {
         message.error(`${file.name} is not a PDF file. Only PDF files are allowed.`);
         return false;
       }
-      
+
       // Add to file list
       setFileList(prev => [...prev, file]);
       return false; // Prevent automatic upload
@@ -168,9 +176,7 @@ const ProfilePage = () => {
       key: 'name',
       sorter: (a: ProfileData, b: ProfileData) => a.name.localeCompare(b.name),
       sortDirections: ['ascend', 'descend', 'ascend'] as SortOrder[],
-      render: (text: string) => (
-        <span style={{ fontWeight: 500 }}>{text}</span>
-      ),
+      render: (text: string) => <span style={{ fontWeight: 500 }}>{text}</span>,
     },
     {
       title: 'Role',
@@ -188,10 +194,9 @@ const ProfilePage = () => {
       key: 'skills',
       render: (skills: string[]) => (
         <span style={{ color: '#666' }}>
-          {skills && skills.length > 0 
+          {skills && skills.length > 0
             ? skills.slice(0, 3).join(', ') + (skills.length > 3 ? '...' : '')
-            : 'No skills listed'
-          }
+            : 'No skills listed'}
         </span>
       ),
     },
@@ -216,8 +221,8 @@ const ProfilePage = () => {
       key: 'actions',
       render: (_: any, record: ProfileData) => (
         <Space>
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             className="view-link"
             onClick={() => {
               console.log(`[profiles] View profile: ${record.id}`);
@@ -226,8 +231,8 @@ const ProfilePage = () => {
           >
             Details
           </Button>
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             className="remove-link"
             onClick={() => {
               console.log(`[profiles] Remove profile: ${record.id}`);
@@ -246,7 +251,7 @@ const ProfilePage = () => {
       <Content className="profiles-content">
         <div className="profiles-page-header">
           <Breadcrumb items={[{ title: 'Home' }, { title: 'Profiles' }]} />
-          
+
           <Row justify="space-between" align="middle" style={{ marginTop: 16 }}>
             <Col>
               <Title level={2} style={{ marginBottom: 0 }}>
@@ -259,10 +264,9 @@ const ProfilePage = () => {
                   Add Profile
                 </Button>
                 {selectedRowKeys.length > 0 && (
-                  <Button 
-                    danger 
+                  <Button
+                    danger
                     onClick={() => {
-                      console.log(`[profiles] Delete ${selectedRowKeys.length} selected profiles:`, selectedRowKeys);
                       // TODO: Implement batch delete functionality
                       message.info(`Selected ${selectedRowKeys.length} profiles for deletion`);
                     }}
@@ -273,25 +277,26 @@ const ProfilePage = () => {
               </Space>
             </Col>
           </Row>
-        
         </div>
 
         <div className="profiles-section">
-          <Title level={4} style={{ marginBottom: 16 }}>Available Profiles</Title>
+          <Title level={4} style={{ marginBottom: 16 }}>
+            Available Profiles
+          </Title>
           <Table
             dataSource={profiles}
             columns={columns}
             rowKey="id"
             rowSelection={rowSelection}
-            pagination={{ 
-              pageSize: 10, 
+            pagination={{
+              pageSize: 10,
               showSizeChanger: true,
-              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} profiles`
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} profiles`,
             }}
             rowClassName={() => 'custom-row-spacing'}
             loading={loading}
             locale={{
-              emptyText: loading ? 'Loading profiles...' : 'No profiles found'
+              emptyText: loading ? 'Loading profiles...' : 'No profiles found',
             }}
           />
         </div>
@@ -306,9 +311,9 @@ const ProfilePage = () => {
           <Button key="cancel" onClick={handleModalClose}>
             Cancel
           </Button>,
-          <Button 
-            key="upload" 
-            type="primary" 
+          <Button
+            key="upload"
+            type="primary"
             loading={uploading}
             onClick={handleUpload}
             disabled={fileList.length === 0}
@@ -326,10 +331,11 @@ const ProfilePage = () => {
             </p>
             <p className="ant-upload-text">Click or drag file to this area to upload</p>
             <p className="ant-upload-hint">
-              Support for a single or bulk upload. Strictly prohibit from uploading company data or other band files
+              Support for a single or bulk upload. Strictly prohibit from uploading company data or
+              other band files
             </p>
           </Upload.Dragger>
-          
+
           {fileList.length > 0 && (
             <div className="file-summary">
               <Typography.Text type="secondary">
