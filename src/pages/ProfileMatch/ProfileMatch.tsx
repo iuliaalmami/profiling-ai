@@ -18,12 +18,13 @@ const ProfileMatch = () => {
   const [loading, setLoading] = useState(true);
   
   interface MatchData {
-    cv_id: string;
-    score: number;
-    name?: string;
-    role?: string;
-    last_updated?: string;
-  }
+  cv_id: string;
+  match_id?: string | number;
+  score: number;
+  name?: string;
+  role?: string;
+  last_updated?: string;
+}
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
@@ -59,7 +60,20 @@ const ProfileMatch = () => {
         console.log('[matches] ===== RAW MATCHES DATA =====');
         console.log('[matches] Full response:', JSON.stringify(matchesData, null, 2));
         console.log('[matches] Type of response:', typeof matchesData);
-        console.log('[matches] Keys in response:', Object.keys(matchesData));
+        if (Array.isArray(matchesData)) {
+          console.log('[matches] Array length:', matchesData.length);
+          if (matchesData.length > 0) {
+            console.log('[matches] First match keys:', Object.keys(matchesData[0]));
+            console.log('[matches] First match sample:', matchesData[0]);
+            console.log('[matches] Match ID field check:', {
+              'id': matchesData[0].id,
+              'match_id': matchesData[0].match_id,
+              '_id': matchesData[0]._id,
+            });
+          }
+        } else {
+          console.log('[matches] Keys in response:', Object.keys(matchesData));
+        }
         
         // Extract job prompt from first match (since all matches have the same job_prompt)
         if (Array.isArray(matchesData) && matchesData.length > 0 && matchesData[0].job_prompt) {
@@ -79,59 +93,122 @@ const ProfileMatch = () => {
         if (Array.isArray(matchesData)) {
           console.log('[matches] Response is directly an array, processing', matchesData.length, 'matches...');
           
-          // Process matches - we'll fetch CV details in parallel for names
-          const matchPromises = matchesData.map(async (match) => {
-            console.log(`[matches] Processing match for CV: ${match.cv_id}`);
+          // Step 1: Extract all cv_ids from matches
+          const cvIds = matchesData.map(match => match.cv_id);
+          console.log('[matches] Collected CV IDs for batch request:', cvIds);
+          
+          // Step 2: Make single batch request for all CV details
+          try {
+            const cvBatchRes = await fetch('http://127.0.0.1:8000/api/v1/cvs', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ cv_ids: cvIds }),
+            });
             
-            let candidateName = 'Unknown';
-            let candidateRole = 'No role available';
-            
-            // Try to fetch CV details for name and role
-            try {
-              const cvRes = await fetch(`http://127.0.0.1:8000/api/v1/cv/${match.cv_id}`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-              });
+            if (cvBatchRes.ok) {
+              const cvBatchData = await cvBatchRes.json();
+              console.log('[matches] Batch CV response:', cvBatchData);
               
-              if (cvRes.ok) {
-                const cvData = await cvRes.json();
-                console.log(`[matches] Raw CV data for ${match.cv_id}:`, cvData);
+              // Step 3: Create a lookup map for CV data by cv_id
+              const cvDataMap = new Map<number, any>();
+              if (Array.isArray(cvBatchData)) {
+                cvBatchData.forEach((cvData: any) => {
+                  if (cvData.id || cvData.cv_id) {
+                    cvDataMap.set(cvData.id || cvData.cv_id, cvData);
+                  }
+                });
+              } else if (cvBatchData.cvs && Array.isArray(cvBatchData.cvs)) {
+                cvBatchData.cvs.forEach((cvData: any) => {
+                  if (cvData.id || cvData.cv_id) {
+                    cvDataMap.set(cvData.id || cvData.cv_id, cvData);
+                  }
+                });
+              }
+              
+              console.log('[matches] Created CV data map with', cvDataMap.size, 'entries');
+              
+              // Step 4: Process matches with CV data
+              const processedMatches = matchesData.map(match => {
+                const cvData = cvDataMap.get(match.cv_id);
                 
-                // Extract name
-                candidateName = cvData.name || candidateName;
+                let candidateName = 'Unknown';
+                let candidateRole = 'No role available';
                 
-                // Extract role from first experience entry
-                if (cvData.experience && Array.isArray(cvData.experience) && cvData.experience.length > 0) {
-                  const firstExperience = cvData.experience[0];
-                  candidateRole = firstExperience.role || firstExperience.title || candidateRole;
-                  console.log(`[matches] Found role from experience: ${candidateRole}`);
+                if (cvData) {
+                  console.log(`[matches] Processing CV data for ${match.cv_id}:`, cvData);
+                  
+                  // Extract name
+                  candidateName = cvData.name || candidateName;
+                  
+                  // Extract role from first experience entry
+                  if (cvData.experience && Array.isArray(cvData.experience) && cvData.experience.length > 0) {
+                    const firstExperience = cvData.experience[0];
+                    candidateRole = firstExperience.role || firstExperience.title || candidateRole;
+                    console.log(`[matches] Found role from experience for ${match.cv_id}: ${candidateRole}`);
+                  } else {
+                    // Fallback to other possible role fields
+                    candidateRole = cvData.last_job_title || cvData.role || candidateRole;
+                    console.log(`[matches] Using fallback role for ${match.cv_id}: ${candidateRole}`);
+                  }
                 } else {
-                  console.log(`[matches] No experience array found for CV ${match.cv_id}. Available keys:`, Object.keys(cvData));
-                  // Fallback to other possible role fields
-                  candidateRole = cvData.last_job_title || cvData.role || candidateRole;
+                  console.warn(`[matches] No CV data found for ${match.cv_id}`);
                 }
                 
-                console.log(`[matches] Enriched CV ${match.cv_id}: ${candidateName} - ${candidateRole}`);
-              }
-            } catch (cvErr) {
-              console.warn(`[matches] Could not fetch CV details for ${match.cv_id}:`, cvErr);
+                console.log(`[matches] Processing match for CV ${match.cv_id}:`, {
+                  raw_match: match,
+                  extracted_match_id: match.id || match.match_id || null,
+                  available_keys: Object.keys(match)
+                });
+                
+                return {
+                  cv_id: match.cv_id.toString(),
+                  match_id: match.id || match.match_id || null,
+                  score: match.score || 0,
+                  name: candidateName,
+                  role: candidateRole,
+                  last_updated: match.created_at || new Date().toISOString(),
+                };
+              });
+              
+              // Sort by score (highest first) and then add to enrichedMatches
+              const sortedMatches = processedMatches.sort((a, b) => b.score - a.score);
+              enrichedMatches.push(...sortedMatches);
+              
+            } else {
+              console.error('[matches] Batch CV request failed:', cvBatchRes.status);
+              // Fallback: create matches without CV details
+              const fallbackMatches = matchesData.map(match => {
+                console.log(`[matches] FALLBACK: Processing match for CV ${match.cv_id}:`, {
+                  raw_match: match,
+                  extracted_match_id: match.id || match.match_id || null,
+                  available_keys: Object.keys(match)
+                });
+                
+                return {
+                  cv_id: match.cv_id.toString(),
+                  match_id: match.id || match.match_id || null,
+                  score: match.score || 0,
+                  name: 'Unknown',
+                  role: 'No role available',
+                  last_updated: match.created_at || new Date().toISOString(),
+                };
+              });
+              const sortedFallback = fallbackMatches.sort((a, b) => b.score - a.score);
+              enrichedMatches.push(...sortedFallback);
             }
-            
-            return {
+          } catch (cvBatchErr) {
+            console.error('[matches] Error in batch CV request:', cvBatchErr);
+            // Fallback: create matches without CV details
+            const fallbackMatches = matchesData.map(match => ({
               cv_id: match.cv_id.toString(),
               score: match.score || 0,
-              name: candidateName,
-              role: candidateRole,
+              name: 'Unknown',
+              role: 'No role available',
               last_updated: match.created_at || new Date().toISOString(),
-            };
-          });
-          
-          // Wait for all CV details to be fetched
-          const processedMatches = await Promise.all(matchPromises);
-          
-          // Sort by score (highest first) and then add to enrichedMatches
-          const sortedMatches = processedMatches.sort((a, b) => b.score - a.score);
-          enrichedMatches.push(...sortedMatches);
+            }));
+            const sortedFallback = fallbackMatches.sort((a, b) => b.score - a.score);
+            enrichedMatches.push(...sortedFallback);
+          }
         } else {
           console.log('[matches] Response is not an array. Available keys:', Object.keys(matchesData));
         }
@@ -228,8 +305,15 @@ const ProfileMatch = () => {
             type="link" 
             className="details-link"
             onClick={() => {
-              console.log(`[matches] View details for CV: ${record.cv_id}`);
-              // TODO: Navigate to profile details page
+              console.log(`[matches] View details for CV: ${record.cv_id}, Match ID: ${record.match_id}`);
+              navigate(`/profile/${record.cv_id}`, {
+                state: {
+                  score: record.score,
+                  jobTitle: jobPrompt,
+                  chatId: chatId,
+                  matchId: record.match_id
+                }
+              });
             }}
           >
             Details
@@ -300,7 +384,7 @@ const ProfileMatch = () => {
           />
         </div>
       </Content>
-      <AiSideChat chatId={chatId} />
+      <AiSideChat chatId={chatId} autoClearContext={true} />
     </Layout>
   );
 };
