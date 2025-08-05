@@ -28,7 +28,7 @@
     }
 
     .new-match-btn {
-      background-color: #1890ff;
+      background-color: vars.$blue;
       color: white;
       border: none;
       padding: 8px 16px;
@@ -37,7 +37,7 @@
       cursor: pointer;
 
       &:hover {
-        background-color: #1677c0;
+        background-color: vars.$blue-2;
       }
     }
   }
@@ -45,10 +45,7 @@
 
 .new-match-content {
   display: flex;
-  // gap: 24px;
-  background: #fff;
-  // min-height: 100vh;
-  // padding: 24px;
+  background: vars.$white;
   flex: 1;
   flex-direction: column;
 }
@@ -68,7 +65,7 @@
   }
 
   p {
-    color: #666;
+    color: vars.$grey-2;
     font-size: 14px;
   }
 }
@@ -76,8 +73,8 @@
 .ai-assistant {
   width: 335px;
   max-width: 100%;
-  background: #fafafa;
-  border-left: 1px solid #eee;
+  background: vars.$light-grey;
+  border-left: 1px solid vars.$light-grey-bg-3;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -91,7 +88,7 @@
 
   .examples-title {
     font-size: 12px;
-    color: #888;
+    color: vars.$grey-3;
     margin-bottom: 8px;
   }
 
@@ -101,7 +98,7 @@
     gap: 8px;
 
     .example-item {
-      background: #f0f2ff;
+      background: vars.$light-grey-bg;
       padding: 8px 12px;
       border-radius: 8px;
       cursor: pointer;
@@ -109,7 +106,7 @@
       transition: background 0.2s;
 
       &:hover {
-        background: #e0e6ff;
+        background: vars.$light-grey-bg-4;
       }
     }
   }
@@ -117,7 +114,7 @@
   .ai-input {
     margin-top: 16px;
     display: flex;
-    border: 1px solid #ccc;
+    border: 1px solid vars.$grey-4;
     border-radius: 8px;
     overflow: hidden;
 
@@ -133,15 +130,15 @@
     }
 
     button {
-      background: #1890ff;
-      color: white;
+      background: vars.$blue;
+      color: vars.$white;
       border: none;
       padding: 0 12px;
       font-size: 16px;
       cursor: pointer;
 
       &:hover {
-        background: #1677c0;
+        background: vars.$blue-2;
       }
     }
   }

@@ -20,7 +20,6 @@ export function useChatHistory(chatId: string, disabled = false) {
           headers,
         });
 
-        console.log('[chat] loading history for chatId:', response);
         if (response.ok) {
           const history = await response.json();
           setInitialMessages(history);

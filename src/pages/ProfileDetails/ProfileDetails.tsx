@@ -23,97 +23,75 @@ interface CVData {
 const ProfileDetails = () => {
   const { cvId } = useParams<{ cvId: string }>();
   const location = useLocation();
-  
+
   // Get match data from navigation state (if coming from matches page)
-  const matchData = location.state as { 
-    score?: number; 
-    jobTitle?: string; 
+  const matchData = location.state as {
+    score?: number;
+    jobTitle?: string;
     chatId?: string;
     matchId?: string | number;
   } | null;
-  
+
   const [cvData, setCvData] = useState<CVData | null>(null);
   const [matchSummary, setMatchSummary] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     if (!cvId) {
       setLoading(false);
       return;
     }
-    
+
     const fetchData = async () => {
       try {
-        console.log(`[ProfileDetails] ===== STARTING DATA FETCH =====`);
-        console.log(`[ProfileDetails] CV ID: ${cvId}`);
-        console.log(`[ProfileDetails] Full navigation state:`, location.state);
-        console.log(`[ProfileDetails] Match data:`, matchData);
-        console.log(`[ProfileDetails] Match ID: ${matchData?.matchId} (type: ${typeof matchData?.matchId})`);
-        
         // Fetch CV data
         const cvResponse = await fetch(`http://127.0.0.1:8000/api/v1/cv/${cvId}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
-        
+
         if (cvResponse.ok) {
           const cvDataResponse = await cvResponse.json();
-          console.log('[ProfileDetails] CV data received:', cvDataResponse);
           setCvData(cvDataResponse);
         } else {
           console.error('[ProfileDetails] Failed to fetch CV data:', cvResponse.status);
         }
-        
+
         // Fetch match summary if matchId is available
         if (matchData?.matchId) {
           try {
-            console.log(`[ProfileDetails] ===== FETCHING MATCH SUMMARY =====`);
-            console.log(`[ProfileDetails] Match ID: ${matchData.matchId}`);
-            console.log(`[ProfileDetails] API URL: http://127.0.0.1:8000/api/v1/match/${matchData.matchId}`);
-            
-            const matchResponse = await fetch(`http://127.0.0.1:8000/api/v1/match/${matchData.matchId}`, {
-              method: 'GET',
-              headers: { 'Content-Type': 'application/json' },
-            });
-            
-            console.log(`[ProfileDetails] Match API response status: ${matchResponse.status}`);
-            console.log(`[ProfileDetails] Match API response ok: ${matchResponse.ok}`);
-            
+            const matchResponse = await fetch(
+              `http://127.0.0.1:8000/api/v1/match/${matchData.matchId}`,
+              {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+              },
+            );
+
             if (matchResponse.ok) {
               const matchDataResponse = await matchResponse.json();
-              console.log('[ProfileDetails] ===== MATCH DATA RESPONSE =====');
-              console.log('[ProfileDetails] Full match response:', JSON.stringify(matchDataResponse, null, 2));
-              console.log('[ProfileDetails] Response keys:', Object.keys(matchDataResponse));
-              
               // Extract summary from match data (the structure might vary, so we'll be flexible)
-              const summary = matchDataResponse.summary || 
-                            matchDataResponse.match_summary || 
-                            matchDataResponse.description ||
-                            matchDataResponse.explanation ||
-                            matchDataResponse.reasoning ||
-                            '';
-              
-              console.log('[ProfileDetails] Summary field checks:', {
-                'summary': matchDataResponse.summary,
-                'match_summary': matchDataResponse.match_summary,
-                'description': matchDataResponse.description,
-                'explanation': matchDataResponse.explanation,
-                'reasoning': matchDataResponse.reasoning,
-                'final_summary': summary
-              });
-              
+              const summary =
+                matchDataResponse.summary ||
+                matchDataResponse.match_summary ||
+                matchDataResponse.description ||
+                matchDataResponse.explanation ||
+                matchDataResponse.reasoning ||
+                '';
+
               if (summary) {
                 setMatchSummary(summary);
-                console.log('[ProfileDetails] ✅ Match summary set successfully:', summary);
               } else {
-                console.log('[ProfileDetails] ❌ No summary found in match data - all fields were empty');
+                console.log(
+                  '[ProfileDetails] ❌ No summary found in match data - all fields were empty',
+                );
               }
             } else {
               const errorText = await matchResponse.text();
               console.error('[ProfileDetails] Failed to fetch match data:', {
                 status: matchResponse.status,
                 statusText: matchResponse.statusText,
-                error: errorText
+                error: errorText,
               });
             }
           } catch (matchError) {
@@ -124,14 +102,13 @@ const ProfileDetails = () => {
           console.log('[ProfileDetails] matchData exists:', !!matchData);
           console.log('[ProfileDetails] matchData.matchId exists:', !!matchData?.matchId);
         }
-        
       } catch (error) {
         console.error('[ProfileDetails] Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, [cvId, matchData?.matchId]);
 
@@ -141,7 +118,10 @@ const ProfileDetails = () => {
 
   if (loading) {
     return (
-      <div className="profile-details" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+      <div
+        className="profile-details"
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}
+      >
         <Spin size="large" />
       </div>
     );
@@ -157,9 +137,8 @@ const ProfileDetails = () => {
   }
 
   // Extract current role from first experience entry
-  const currentRole = cvData.experience && cvData.experience.length > 0 
-    ? cvData.experience[0].role 
-    : 'Professional';
+  const currentRole =
+    cvData.experience && cvData.experience.length > 0 ? cvData.experience[0].role : 'Professional';
 
   return (
     <div className="profile-details">
@@ -209,7 +188,8 @@ const ProfileDetails = () => {
                 </Typography.Text>
               </div>
               <Typography.Paragraph className="job-description">
-                The score is based on {cvData.name}'s experience and skills alignment with the job requirements.
+                The score is based on {cvData.name}'s experience and skills alignment with the job
+                requirements.
               </Typography.Paragraph>
             </Card>
           )}
@@ -285,8 +265,8 @@ const ProfileDetails = () => {
           </div>
         </div>
         <div className="profile-details-content-right">
-          <AiSideChat 
-            chatId={matchData?.chatId} 
+          <AiSideChat
+            chatId={matchData?.chatId}
             candidateName={cvData.name}
             autoSendContext={!!matchData?.chatId} // Only auto-send if coming from matches page
           />

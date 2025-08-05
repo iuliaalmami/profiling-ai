@@ -17,21 +17,24 @@ interface AiSideChatProps {
   autoClearContext?: boolean;
 }
 
-const AiSideChat = ({ chatId, candidateName, autoSendContext = false, autoClearContext = false }: AiSideChatProps) => {
+const AiSideChat = ({
+  chatId,
+  candidateName,
+  autoSendContext = false,
+  autoClearContext = false,
+}: AiSideChatProps) => {
   const inputRef = useRef(null);
-  
+
   // Use chatId if provided, otherwise fallback to generic session
   const sessionId = chatId || 'ai-sidebar-session';
   const shouldLoadHistory = !!chatId; // Only load history if we have a specific chatId
-  
-  console.log(`[AiSideChat] Initializing with chatId: ${chatId}, sessionId: ${sessionId}`);
-  
+
   // Load chat history if we have a chatId
   const [initialMessages] = useChatHistory(chatId || '', !shouldLoadHistory);
 
   const [contextMessageSent, setContextMessageSent] = useState(false);
   const location = useLocation();
-  const previousPropsRef = useRef<{autoSendContext?: boolean; autoClearContext?: boolean}>({});
+  const previousPropsRef = useRef<{ autoSendContext?: boolean; autoClearContext?: boolean }>({});
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
     id: sessionId,
@@ -48,23 +51,18 @@ const AiSideChat = ({ chatId, candidateName, autoSendContext = false, autoClearC
         body.id = '';
       }
 
-      console.log(`[AiSideChat] Sending request with body:`, body);
       return body;
     },
   });
 
   // Auto-send context message when component loads with candidate name
   useEffect(() => {
-    const shouldSendContext = autoSendContext && 
-                             candidateName && 
-                             !contextMessageSent && 
-                             initialMessages.length === 0; // Only if no initial messages (new conversation)
-    
+    const shouldSendContext =
+      autoSendContext && candidateName && !contextMessageSent && initialMessages.length === 0; // Only if no initial messages (new conversation)
+
     if (shouldSendContext) {
-      console.log(`[AiSideChat] Auto-sending context message for candidate: ${candidateName}`);
-      
       const contextMessage = `Now we only discuss about ${candidateName}, please respond according to his cv only`;
-      
+
       // Use setTimeout to ensure the chat is fully initialized
       setTimeout(() => {
         append({ role: 'user', content: contextMessage });
@@ -77,63 +75,39 @@ const AiSideChat = ({ chatId, candidateName, autoSendContext = false, autoClearC
   useEffect(() => {
     const currentProps = { autoSendContext, autoClearContext };
     const previousProps = previousPropsRef.current;
-    
+
     // Track context state in sessionStorage for persistence across navigation
     const contextKey = `aiSideChat_context_${chatId}`;
     const storedContext = sessionStorage.getItem(contextKey);
-    
-    console.log(`[AiSideChat] Props monitoring:`, {
-      previousProps: JSON.stringify(previousProps),
-      currentProps: JSON.stringify(currentProps),
-      storedContext,
-      messagesLength: messages.length,
-      lastMessage: messages[messages.length - 1]?.content?.substring(0, 50) + '...',
-      currentPath: location.pathname,
-      candidateName,
-      chatId
-    });
-    
+
     // Set context when on profile page
     if (autoSendContext && candidateName) {
       sessionStorage.setItem(contextKey, 'profile');
-      console.log(`[AiSideChat] 📝 Setting context state to 'profile' for ${candidateName}`);
     }
-    
+
     // Detect transition to matches page and clear if needed
-    const wasOnProfile = storedContext === 'profile' || (previousProps.autoSendContext && !previousProps.autoClearContext);
+    const wasOnProfile =
+      storedContext === 'profile' ||
+      (previousProps.autoSendContext && !previousProps.autoClearContext);
     const nowOnMatches = !currentProps.autoSendContext && currentProps.autoClearContext;
     const shouldClearContext = wasOnProfile && nowOnMatches;
-    
+
     // Also check if we have a candidate context message that needs clearing
     const contextMessage = `Now we only discuss about`;
-    const hasContextMessage = messages.some(msg => 
-      msg.role === 'user' && msg.content.includes(contextMessage)
+    const hasContextMessage = messages.some(
+      msg => msg.role === 'user' && msg.content.includes(contextMessage),
     );
-    
-    console.log(`[AiSideChat] Context analysis:`, {
-      'previousProps.autoSendContext': previousProps.autoSendContext,
-      'previousProps.autoClearContext': previousProps.autoClearContext,
-      'currentProps.autoSendContext': currentProps.autoSendContext,
-      'currentProps.autoClearContext': currentProps.autoClearContext,
-      storedContext,
-      wasOnProfile,
-      nowOnMatches,
-      hasContextMessage,
-      shouldClearContext: shouldClearContext && hasContextMessage
-    });
-    
+
     if (shouldClearContext && hasContextMessage) {
       // Check if we haven't already sent a clear message recently
       const clearMessage = `We are no longer discussing a specific candidate. Please return to general conversation about all candidates and matches.`;
       const lastMessage = messages[messages.length - 1];
       const recentlyCleared = lastMessage && lastMessage.content === clearMessage;
-      
+
       if (!recentlyCleared && messages.length > 0) {
-        console.log(`[AiSideChat] ✅ Auto-sending clear context message (stored context: ${storedContext})`);
-        
         // Clear the stored context
         sessionStorage.setItem(contextKey, 'cleared');
-        
+
         setTimeout(() => {
           append({ role: 'user', content: clearMessage });
         }, 1000);
@@ -143,10 +117,18 @@ const AiSideChat = ({ chatId, candidateName, autoSendContext = false, autoClearC
     } else if (!shouldClearContext) {
       console.log(`[AiSideChat] ❌ Clear context conditions not met`);
     }
-    
+
     // Update previous props for next comparison
     previousPropsRef.current = currentProps;
-  }, [autoSendContext, autoClearContext, candidateName, messages, append, location.pathname, chatId]);
+  }, [
+    autoSendContext,
+    autoClearContext,
+    candidateName,
+    messages,
+    append,
+    location.pathname,
+    chatId,
+  ]);
 
   const handleSuggestionClick = (text: string) => {
     append({ role: 'user', content: text });
@@ -176,7 +158,9 @@ const AiSideChat = ({ chatId, candidateName, autoSendContext = false, autoClearC
                 <Button
                   className="ai-suggestion-tile"
                   block
-                  onClick={() => handleSuggestionClick(`What are ${candidateName}'s strongest skills?`)}
+                  onClick={() =>
+                    handleSuggestionClick(`What are ${candidateName}'s strongest skills?`)
+                  }
                 >
                   What are {candidateName}'s strongest skills?
                   <RightOutlined />
@@ -205,9 +189,7 @@ const AiSideChat = ({ chatId, candidateName, autoSendContext = false, autoClearC
                   className="ai-suggestion-tile"
                   block
                   onClick={() =>
-                    handleSuggestionClick(
-                      'What skills are missing in the lower-scored candidates?',
-                    )
+                    handleSuggestionClick('What skills are missing in the lower-scored candidates?')
                   }
                 >
                   What skills are missing in the lower-scored candidates?
@@ -222,7 +204,7 @@ const AiSideChat = ({ chatId, candidateName, autoSendContext = false, autoClearC
           <div className="ai-chat-messages">
             {messages.map((msg, idx) => {
               const bubbleClass = `chat-bubble ${msg.role}`;
-              
+
               return (
                 <div key={idx} className={bubbleClass}>
                   {msg.role === 'assistant' ? (

@@ -27,7 +27,7 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
     return isChatFromUrl ? initialChatId : sessionStorage.getItem('chatId');
   });
   const [isStartingFresh, setIsStartingFresh] = useState(!isChatFromUrl);
-  
+
   // Match processing states
   const [isProcessingMatch, setIsProcessingMatch] = useState(false);
   const [matchProcessingStarted, setMatchProcessingStarted] = useState(false);
@@ -35,35 +35,33 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
 
   const [initialMessages] = useChatHistory(chatId ?? '', isStartingFresh);
 
-  const { messages, input, handleInputChange, handleSubmit, setMessages, setInput } =
-    useChat({
-      id: chatId ?? undefined,
-      api: 'http://127.0.0.1:8000/api/v1/smart-chat/stream',
-      initialMessages: initialMessages as Message[],
-      onResponse: async response => {
-        const newChatId = response.headers.get('x-chat-id');
-        if (newChatId && !chatId) {
-          setChatId(newChatId);
-          sessionStorage.setItem('chatId', newChatId);
-          // Update URL to reflect the new chat ID
-          navigate(`/chat/${newChatId}`, { replace: true });
-        }
-      },
-      experimental_prepareRequestBody({ messages }) {
-        const lastMessage = messages[messages.length - 1];
-        const body: any = { message: lastMessage?.content ?? '' };
+  const { messages, input, handleInputChange, handleSubmit, setMessages, setInput } = useChat({
+    id: chatId ?? undefined,
+    api: 'http://127.0.0.1:8000/api/v1/smart-chat/stream',
+    initialMessages: initialMessages as Message[],
+    onResponse: async response => {
+      const newChatId = response.headers.get('x-chat-id');
+      if (newChatId && !chatId) {
+        setChatId(newChatId);
+        sessionStorage.setItem('chatId', newChatId);
+        // Update URL to reflect the new chat ID
+        navigate(`/chat/${newChatId}`, { replace: true });
+      }
+    },
+    experimental_prepareRequestBody({ messages }) {
+      const lastMessage = messages[messages.length - 1];
+      const body: any = { message: lastMessage?.content ?? '' };
 
-        const storedChatId = sessionStorage.getItem('chatId');
-        if (storedChatId && /^\d+$/.test(storedChatId)) {
-          body.id = parseInt(storedChatId, 10);
-        } else {
-          body.id = '';
-        }
+      const storedChatId = sessionStorage.getItem('chatId');
+      if (storedChatId && /^\d+$/.test(storedChatId)) {
+        body.id = parseInt(storedChatId, 10);
+      } else {
+        body.id = '';
+      }
 
-        console.log('[chat] payload trimis:', body);
-        return body;
-      },
-    });
+      return body;
+    },
+  });
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -77,17 +75,13 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role === 'assistant' && !matchProcessingStarted) {
       const content = lastMessage.content;
-      console.log('[detection] checking message:', content);
-      
+
       // Check for either pattern that indicates match processing started
       const hasToolParams = content.includes('Tool params:');
       const hasRunMatch = content.includes('run_match');
       const hasMatchProcess = content.includes('match process has started');
-      
-      console.log('[detection] hasToolParams:', hasToolParams, 'hasRunMatch:', hasRunMatch, 'hasMatchProcess:', hasMatchProcess);
-      
+
       if ((hasToolParams && hasRunMatch) || hasMatchProcess) {
-        console.log('[detection] TRIGGERING match processing!');
         setMatchProcessingStarted(true);
         setIsProcessingMatch(true);
         // Start polling for match status
@@ -103,9 +97,7 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
     try {
       const response = await fetch(`http://127.0.0.1:8000/api/v1/match/status/${currentChatId}`);
       const data = await response.json();
-      
-      console.log('[match-status]:', data);
-      
+
       if (data.status === 'completed') {
         setIsProcessingMatch(false);
         setMatchCompleted(true);
@@ -279,7 +271,10 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
               <Spin size="large" />
               <div className="loader-text">
                 <h4>Processing your search...</h4>
-                <p>We're finding the best matches for your job requirements. This may take a few moments.</p>
+                <p>
+                  We're finding the best matches for your job requirements. This may take a few
+                  moments.
+                </p>
               </div>
             </div>
           </div>
@@ -292,11 +287,14 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
               <div className="success-icon">✅</div>
               <div className="loader-text">
                 <h4>Matches found!</h4>
-                <p>Your search has been completed successfully. Click below to view the matching candidates.</p>
+                <p>
+                  Your search has been completed successfully. Click below to view the matching
+                  candidates.
+                </p>
               </div>
-              <Button 
-                type="primary" 
-                size="large" 
+              <Button
+                type="primary"
+                size="large"
                 onClick={handleShowMatches}
                 style={{ marginTop: '16px' }}
               >
@@ -309,14 +307,14 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
         <form onSubmit={handleManualSubmit} className="chat-input">
           <Input
             ref={inputRef}
-            placeholder={isProcessingMatch ? "Processing matches..." : "Type your message here"}
+            placeholder={isProcessingMatch ? 'Processing matches...' : 'Type your message here'}
             value={input}
             onChange={handleInputChange}
             disabled={isProcessingMatch}
           />
-          <Button 
-            type="primary" 
-            icon={<SendOutlined />} 
+          <Button
+            type="primary"
+            icon={<SendOutlined />}
             htmlType="submit"
             disabled={isProcessingMatch}
           >
