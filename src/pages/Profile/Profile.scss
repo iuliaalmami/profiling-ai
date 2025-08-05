@@ -1,6 +1,156 @@
-@use '../../styles/variables.scss' as var;
+@use '../../styles/variables.scss' as vars;
 
-.profile-page {
-  width: 100%;
-  background-color: var.$white;
+.profiles-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  .profiles-content {
+    padding: 24px;
+    background: vars.$white;
+
+    .profiles-page-header {
+      padding-bottom: 24px;
+      border-bottom: 1px solid #f0f0f0;
+      margin-bottom: 24px;
+
+      h2 {
+        font-family: vars.$font-primary;
+        font-size: 24px;
+        color: vars.$light-black-2;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .profiles-description-section {
+        p {
+          font-size: 14px;
+          line-height: 1.6;
+          color: #666;
+          margin: 0;
+        }
+      }
+    }
+
+    .profiles-section {
+      h4 {
+        font-family: vars.$font-primary;
+        font-size: 18px;
+        color: vars.$light-black-2;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .ant-table {
+    font-size: 14px;
+
+    .ant-table-thead > tr > th {
+      font-weight: 500;
+      background-color: #fafafa;
+    }
+
+    .ant-table-tbody > tr {
+      height: 64px;
+    }
+
+    .ant-table-tbody > tr > td {
+      vertical-align: middle;
+      padding: 16px 8px;
+    }
+  }
+
+  .custom-row-spacing {
+    td {
+      padding-top: 12px !important;
+      padding-bottom: 12px !important;
+    }
+  }
+
+  .ant-table-tbody > tr.ant-table-row-selected > td {
+    background-color: #e6f7ff !important;
+  }
+
+  .ant-table-tbody > tr:hover > td {
+    background-color: #f5f5f5 !important;
+  }
+
+  .ant-btn-link {
+    padding: 0;
+  }
+
+  .remove-link {
+    color: #f5222d;
+  }
+
+  .view-link {
+    color: #1890ff;
+  }
+}
+
+// Add Profile Modal Styles
+.add-profile-modal {
+  .ant-modal-header {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 16px 24px;
+    
+    .ant-modal-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: #262626;
+    }
+  }
+
+  .ant-modal-body {
+    padding: 24px;
+  }
+
+  .upload-section {
+    .ant-upload-drag {
+      background: #fafafa;
+      border: 2px dashed #d9d9d9;
+      border-radius: 6px;
+      padding: 40px 20px;
+      text-align: center;
+      transition: border-color 0.3s;
+
+      &:hover {
+        border-color: #40a9ff;
+      }
+
+      .ant-upload-drag-icon {
+        margin-bottom: 16px;
+      }
+
+      .ant-upload-text {
+        font-size: 16px;
+        color: #262626;
+        margin-bottom: 8px;
+      }
+
+      .ant-upload-hint {
+        font-size: 14px;
+        color: #8c8c8c;
+      }
+    }
+
+    .file-summary {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #f6ffed;
+      border: 1px solid #b7eb8f;
+      border-radius: 6px;
+      text-align: center;
+    }
+  }
+
+  .ant-modal-footer {
+    border-top: 1px solid #f0f0f0;
+    padding: 12px 24px;
+    text-align: right;
+
+    .ant-btn {
+      margin-left: 8px;
+    }
+  }
 }

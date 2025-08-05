@@ -191,6 +191,34 @@
   }
 }
 
+// Skills section styling
+.skills-container {
+  .skills-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+
+    .skill-tag {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin: 0;
+      
+      &.ant-tag {
+        border: 1px solid #d9d9d9;
+        background: #f6f8ff;
+        color: #1890ff;
+        
+        &:hover {
+          background: #e6f7ff;
+          border-color: #40a9ff;
+        }
+      }
+    }
+  }
+}
+
 .ant-card {
   border-radius: 0 !important;
 }

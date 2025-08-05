@@ -1,4 +1,4 @@
-import { Breadcrumb, Button, Typography, Card, Avatar, Row, Col, Spin } from 'antd';
+import { Breadcrumb, Button, Typography, Card, Avatar, Row, Col, Spin, Tag } from 'antd';
 import './ProfileDetails.scss';
 import AiSideChat from '../../components/AiSideChat/AiSideChat';
 
@@ -35,6 +35,7 @@ const ProfileDetails = () => {
   const [cvData, setCvData] = useState<CVData | null>(null);
   const [matchSummary, setMatchSummary] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [showAllSkills, setShowAllSkills] = useState(false);
 
   useEffect(() => {
     if (!cvId) {
@@ -237,11 +238,32 @@ const ProfileDetails = () => {
             <Card className="expertise-card">
               <Typography.Title level={5}>Skills</Typography.Title>
               {cvData.skills && cvData.skills.length > 0 ? (
-                <ul>
-                  {cvData.skills.map((skill, index) => (
-                    <li key={index}>{skill}</li>
-                  ))}
-                </ul>
+                <div className="skills-container">
+                  <div className="skills-tags">
+                    {(showAllSkills ? cvData.skills : cvData.skills.slice(0, 12)).map((skill, index) => (
+                      <Tag 
+                        key={index} 
+                        className="skill-tag"
+                        color="blue"
+                      >
+                        {skill}
+                      </Tag>
+                    ))}
+                  </div>
+                  {cvData.skills.length > 12 && (
+                    <Button 
+                      type="link" 
+                      size="small"
+                      onClick={() => setShowAllSkills(!showAllSkills)}
+                      style={{ marginTop: '8px', padding: 0 }}
+                    >
+                      {showAllSkills 
+                        ? `Show less` 
+                        : `Show ${cvData.skills.length - 12} more skills`
+                      }
+                    </Button>
+                  )}
+                </div>
               ) : (
                 <Typography.Paragraph>No skills information available.</Typography.Paragraph>
               )}
