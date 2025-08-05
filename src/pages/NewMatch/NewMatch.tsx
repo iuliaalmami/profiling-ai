@@ -1,10 +1,11 @@
 import { Button, Typography, Breadcrumb } from 'antd';
 import './NewMatch.scss';
 import AiChat from '../../components/AiChat/AiChat';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const NewMatchPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
   const handleCancel = () => {
     sessionStorage.removeItem('chatId');
@@ -24,7 +25,7 @@ const NewMatchPage = () => {
       </div>
 
       <div className="new-match-content">
-        <AiChat chatId="" />
+        <AiChat chatId={id === 'new' ? '' : (id || '')} />
       </div>
     </div>
   );

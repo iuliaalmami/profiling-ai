@@ -19,7 +19,7 @@ const DashboardPage = () => {
       <div className="dashboard-header">
         <div className="dashboard-header-top">
           <h3>Dashboard</h3>
-          <Button type="primary" className="new-match-btn" onClick={() => navigate('/chat/:id')}>
+          <Button type="primary" className="new-match-btn" onClick={() => navigate('/chat/new')}>
             New match
           </Button>
         </div>

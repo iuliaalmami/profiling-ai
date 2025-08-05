@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Input, Button, type InputRef } from 'antd';
+import { Input, Button, Spin, type InputRef } from 'antd';
 import { SendOutlined, UserOutlined, RobotOutlined, RightOutlined } from '@ant-design/icons';
 import { useChat, type Message } from '@ai-sdk/react';
-import './AIChat.scss';
+import './AiChat.scss';
 import { Markdown } from '../Markdown/Markdown';
 import { useNavigate } from 'react-router-dom';
 import { useChatHistory } from '../../hooks/useChatHistory';
@@ -27,10 +27,15 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
     return isChatFromUrl ? initialChatId : sessionStorage.getItem('chatId');
   });
   const [isStartingFresh, setIsStartingFresh] = useState(!isChatFromUrl);
+  
+  // Match processing states
+  const [isProcessingMatch, setIsProcessingMatch] = useState(false);
+  const [matchProcessingStarted, setMatchProcessingStarted] = useState(false);
+  const [matchCompleted, setMatchCompleted] = useState(false);
 
-  const [initialMessages, isLoadingHistory] = useChatHistory(chatId ?? '', isStartingFresh);
+  const [initialMessages] = useChatHistory(chatId ?? '', isStartingFresh);
 
-  const { messages, input, handleInputChange, handleSubmit, append, setMessages, setInput } =
+  const { messages, input, handleInputChange, handleSubmit, setMessages, setInput } =
     useChat({
       id: chatId ?? undefined,
       api: 'http://127.0.0.1:8000/api/v1/smart-chat/stream',
@@ -40,6 +45,8 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
         if (newChatId && !chatId) {
           setChatId(newChatId);
           sessionStorage.setItem('chatId', newChatId);
+          // Update URL to reflect the new chat ID
+          navigate(`/chat/${newChatId}`, { replace: true });
         }
       },
       experimental_prepareRequestBody({ messages }) {
@@ -64,6 +71,60 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
     }, 50);
     return () => clearTimeout(timeout);
   }, [messages]);
+
+  // Monitor messages for "Tool params:" to detect match processing
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && !matchProcessingStarted) {
+      const content = lastMessage.content;
+      console.log('[detection] checking message:', content);
+      
+      // Check for either pattern that indicates match processing started
+      const hasToolParams = content.includes('Tool params:');
+      const hasRunMatch = content.includes('run_match');
+      const hasMatchProcess = content.includes('match process has started');
+      
+      console.log('[detection] hasToolParams:', hasToolParams, 'hasRunMatch:', hasRunMatch, 'hasMatchProcess:', hasMatchProcess);
+      
+      if ((hasToolParams && hasRunMatch) || hasMatchProcess) {
+        console.log('[detection] TRIGGERING match processing!');
+        setMatchProcessingStarted(true);
+        setIsProcessingMatch(true);
+        // Start polling for match status
+        if (chatId) {
+          pollMatchStatus(chatId);
+        }
+      }
+    }
+  }, [messages, chatId, matchProcessingStarted]);
+
+  // Polling function for match status
+  const pollMatchStatus = async (currentChatId: string) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/match/status/${currentChatId}`);
+      const data = await response.json();
+      
+      console.log('[match-status]:', data);
+      
+      if (data.status === 'completed') {
+        setIsProcessingMatch(false);
+        setMatchCompleted(true);
+        // Match completed - no need to store prompt since we navigate with chatId
+      } else if (data.status === 'error' || data.status === 'failed') {
+        setIsProcessingMatch(false);
+        setMatchProcessingStarted(false);
+        setMatchCompleted(false);
+        console.error('Match processing failed:', data);
+      } else {
+        // Still processing, poll again after delay
+        setTimeout(() => pollMatchStatus(currentChatId), 5000);
+      }
+    } catch (error) {
+      console.error('Error polling match status:', error);
+      // Retry after longer delay
+      setTimeout(() => pollMatchStatus(currentChatId), 5000);
+    }
+  };
 
   const extractTextParts = (content: string): { response?: string; prompt?: string } => {
     try {
@@ -108,14 +169,22 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
   };
 
   const handleSearchMatches = () => {
-    const lastAssistantWithPrompt = [...messages]
-      .reverse()
-      .find(msg => msg.role === 'assistant' && extractTextParts(msg.content).prompt);
-
-    const prompt = extractTextParts(lastAssistantWithPrompt?.content || '').prompt;
-    if (prompt) {
-      navigate('/matches', { state: { prompt } });
+    if (chatId) {
+      navigate(`/matches/${chatId}`);
+    } else {
+      console.error('No chat ID available for matches navigation');
     }
+  };
+
+  const handleShowMatches = () => {
+    if (chatId) {
+      navigate(`/matches/${chatId}`);
+    } else {
+      console.error('No chat ID available for matches navigation');
+    }
+    // Reset states after navigation
+    setMatchCompleted(false);
+    setMatchProcessingStarted(false);
   };
 
   return (
@@ -203,14 +272,54 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
           })}
         </div>
 
+        {/* Match processing loading UI */}
+        {isProcessingMatch && (
+          <div className="match-processing-loader">
+            <div className="loader-content">
+              <Spin size="large" />
+              <div className="loader-text">
+                <h4>Processing your search...</h4>
+                <p>We're finding the best matches for your job requirements. This may take a few moments.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Match completed UI */}
+        {matchCompleted && (
+          <div className="match-completed-loader">
+            <div className="loader-content">
+              <div className="success-icon">✅</div>
+              <div className="loader-text">
+                <h4>Matches found!</h4>
+                <p>Your search has been completed successfully. Click below to view the matching candidates.</p>
+              </div>
+              <Button 
+                type="primary" 
+                size="large" 
+                onClick={handleShowMatches}
+                style={{ marginTop: '16px' }}
+              >
+                Show Matches
+              </Button>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleManualSubmit} className="chat-input">
           <Input
             ref={inputRef}
-            placeholder="Type your message here"
+            placeholder={isProcessingMatch ? "Processing matches..." : "Type your message here"}
             value={input}
             onChange={handleInputChange}
+            disabled={isProcessingMatch}
           />
-          <Button type="primary" icon={<SendOutlined />} htmlType="submit">
+          <Button 
+            type="primary" 
+            icon={<SendOutlined />} 
+            htmlType="submit"
+            disabled={isProcessingMatch}
+          >
             Send
           </Button>
         </form>

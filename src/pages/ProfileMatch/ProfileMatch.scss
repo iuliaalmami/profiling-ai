@@ -6,19 +6,36 @@
 
   .matches-left {
     flex: 3;
-    padding: 0 24px;
+    padding: 24px;
+    background: vars.$white;
 
-    .matches-left-header {
-      padding: 16px 24px;
-      background: vars.$white;
-      margin-bottom: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    .matches-page-header {
+      padding-bottom: 24px;
+      border-bottom: 1px solid #f0f0f0;
+      margin-bottom: 24px;
 
+      h2 {
+        font-family: vars.$font-primary;
+        font-size: 24px;
+        color: vars.$light-black-2;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .job-description-section {
+        p {
+          font-size: 14px;
+          line-height: 1.6;
+          color: #666;
+          margin: 0;
+        }
+      }
+    }
+
+    .profile-matches-section {
       h4 {
         font-family: vars.$font-primary;
-        font-size: 20px;
+        font-size: 18px;
         color: vars.$light-black-2;
         font-weight: 500;
       }

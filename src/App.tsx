@@ -22,8 +22,9 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profiles" element={<Profile />} />
-            <Route path="chat/:id" element={<NewMatchPage />} />
-            <Route path="/matches" element={<ProfileMatch />} />
+            <Route path="/chat/new" element={<NewMatchPage />} />
+            <Route path="/chat/:id" element={<NewMatchPage />} />
+            <Route path="/matches/:chatId" element={<ProfileMatch />} />
             <Route path="/profile-details" element={<ProfileDetails />} />
           </Routes>
         </div>

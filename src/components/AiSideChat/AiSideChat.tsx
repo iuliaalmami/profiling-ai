@@ -3,23 +3,45 @@ import { RightOutlined, RobotOutlined, SendOutlined, UserOutlined } from '@ant-d
 import { Button, Input, Typography, Spin } from 'antd';
 import Sider from 'antd/es/layout/Sider';
 import './AiSideChat.scss';
-import { useChat } from '@ai-sdk/react';
+import { useChat, type Message } from '@ai-sdk/react';
+import { useChatHistory } from '../../hooks/useChatHistory';
+import { Markdown } from '../Markdown/Markdown';
 
 const { Title, Text, Paragraph } = Typography;
 
-const AiSideChat = () => {
-  const sessionId = 'ai-sidebar-session';
+interface AiSideChatProps {
+  chatId?: string;
+}
+
+const AiSideChat = ({ chatId }: AiSideChatProps) => {
   const inputRef = useRef(null);
+  
+  // Use chatId if provided, otherwise fallback to generic session
+  const sessionId = chatId || 'ai-sidebar-session';
+  const shouldLoadHistory = !!chatId; // Only load history if we have a specific chatId
+  
+  console.log(`[AiSideChat] Initializing with chatId: ${chatId}, sessionId: ${sessionId}`);
+  
+  // Load chat history if we have a chatId
+  const [initialMessages] = useChatHistory(chatId || '', !shouldLoadHistory);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
     id: sessionId,
-    api: 'http://127.0.0.1:8000/api/v1/chat',
-    initialMessages: [],
-    experimental_prepareRequestBody({ messages, id }) {
-      return {
-        message: messages[messages.length - 1],
-        id,
-      };
+    api: 'http://127.0.0.1:8000/api/v1/smart-chat/stream',
+    initialMessages: initialMessages as Message[],
+    experimental_prepareRequestBody({ messages }) {
+      const lastMessage = messages[messages.length - 1];
+      const body: any = { message: lastMessage?.content ?? '' };
+
+      // Use chatId for API if available
+      if (chatId && /^\d+$/.test(chatId)) {
+        body.id = parseInt(chatId, 10);
+      } else {
+        body.id = '';
+      }
+
+      console.log(`[AiSideChat] Sending request with body:`, body);
+      return body;
     },
   });
 
@@ -48,9 +70,9 @@ const AiSideChat = () => {
             <Button
               className="ai-suggestion-tile"
               block
-              onClick={() => handleSuggestionClick('Why did [name] get a 100% match score?')}
+              onClick={() => handleSuggestionClick('Tell me about the top 3 candidates')}
             >
-              Why did [name] get a 100% match score?
+              Tell me about the top 3 candidates
               <RightOutlined />
             </Button>
             <Button
@@ -58,11 +80,11 @@ const AiSideChat = () => {
               block
               onClick={() =>
                 handleSuggestionClick(
-                  'What does [name] need to do to increase her matching score to 100%?',
+                  'What skills are missing in the lower-scored candidates?',
                 )
               }
             >
-              What does [name] need to do to increase her matching score to 100%?
+              What skills are missing in the lower-scored candidates?
               <RightOutlined />
             </Button>
           </div>
@@ -70,21 +92,41 @@ const AiSideChat = () => {
 
         <div className="ai-middle">
           <div className="ai-chat-messages">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`chat-bubble ${msg.role}`}>
-                {msg.role === 'assistant' ? (
-                  <>
-                    <RobotOutlined className="chat-icon" />
-                    <Typography.Paragraph>{msg.content}</Typography.Paragraph>
-                  </>
-                ) : (
-                  <>
-                    <UserOutlined className="chat-icon" />
-                    <Typography.Text>{msg.content}</Typography.Text>
-                  </>
-                )}
+            {messages.map((msg, idx) => {
+              const bubbleClass = `chat-bubble ${msg.role}`;
+              
+              return (
+                <div key={idx} className={bubbleClass}>
+                  {msg.role === 'assistant' ? (
+                    <>
+                      <div className="assistant-message-content">
+                        <RobotOutlined className="chat-icon" />
+                        <div className="message-text">
+                          <Markdown>{msg.content}</Markdown>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="user-message-content">
+                        <span className="message-text">{msg.content}</span>
+                        <UserOutlined className="chat-icon" />
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+            {isLoading && (
+              <div className="chat-bubble assistant loading">
+                <div className="assistant-message-content">
+                  <RobotOutlined className="chat-icon" />
+                  <div className="message-text">
+                    <Spin size="small" /> Thinking...
+                  </div>
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
