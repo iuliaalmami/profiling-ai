@@ -90,10 +90,6 @@ const ProfileDetails = () => {
 
               if (summary) {
                 setMatchSummary(summary);
-              } else {
-                console.log(
-                  '[ProfileDetails] ❌ No summary found in match data - all fields were empty',
-                );
               }
             } else {
               const errorText = await matchResponse.text();
@@ -106,10 +102,6 @@ const ProfileDetails = () => {
           } catch (matchError) {
             console.error('[ProfileDetails] Error fetching match data:', matchError);
           }
-        } else {
-          console.log('[ProfileDetails] ❌ No match ID provided, skipping match summary fetch');
-          console.log('[ProfileDetails] matchData exists:', !!matchData);
-          console.log('[ProfileDetails] matchData.matchId exists:', !!matchData?.matchId);
         }
       } catch (error) {
         console.error('[ProfileDetails] Error fetching data:', error);
@@ -122,7 +114,7 @@ const ProfileDetails = () => {
   }, [cvId, matchData?.matchId]);
 
   const handleExportProfile = () => {
-    console.log('Exporting profile as PDF...');
+    // TODO: Implement PDF export functionality
   };
 
   if (loading) {

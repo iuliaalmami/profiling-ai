@@ -127,11 +127,7 @@ const AiSideChat = ({
         setTimeout(() => {
           append({ role: 'user', content: clearMessage });
         }, 1000);
-      } else {
-        console.log(`[AiSideChat] ❌ Clear message already sent recently`);
       }
-    } else if (!shouldClearContext) {
-      console.log(`[AiSideChat] ❌ Clear context conditions not met`);
     }
 
     // Update previous props for next comparison

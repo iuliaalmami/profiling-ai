@@ -25,7 +25,7 @@ const JobCard = ({ job }: { job: Job }) => {
         borderRadius: '6px',
         boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
       }}
-      bodyStyle={{ padding: '12px 16px' }}
+      styles={{ body: { padding: '12px 16px' } }}
     >
       {/* Horizontal layout: Left section (title + metadata) | Right section (skills) */}
       <div style={{ 

@@ -27,11 +27,7 @@ const JobDescription = () => {
   // Fetch matches data for the authenticated user using new endpoint
   useEffect(() => {
     const fetchMatches = async () => {
-      console.log('[JobDescription] Starting fetch, token:', token ? 'Present' : 'Missing');
-      if (!token) {
-        console.log('[JobDescription] No token, skipping fetch');
-        return;
-      }
+      if (!token) return;
       
       try {
         setLoading(true);
@@ -45,8 +41,6 @@ const JobDescription = () => {
 
         if (response.ok) {
           const matches = await response.json();
-          console.log('[JobDescription] Raw API response:', matches);
-          console.log('[JobDescription] First match object:', matches[0]);
           
           // Group matches by job_prompt and count them
           const jobGroups = matches.reduce((groups: any, match: any) => {
@@ -72,20 +66,14 @@ const JobDescription = () => {
           }, {});
           
           const transformedMatches = Object.values(jobGroups) as JobMatch[];
-          console.log('[JobDescription] Grouped jobs:', transformedMatches);
-          
-          console.log('[JobDescription] All transformed matches:', transformedMatches);
           
           // Filter out jobs with 0 matches and sort by latest first
           const filteredAndSorted = transformedMatches
             .filter((job: JobMatch) => job.matches! > 0)
             .sort((a: JobMatch, b: JobMatch) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime());
           
-          console.log('[JobDescription] Filtered and sorted:', filteredAndSorted);
           setData(filteredAndSorted);
         } else {
-          console.log('[JobDescription] API error response status:', response.status);
-          console.log('[JobDescription] API error response text:', await response.text());
           message.error('Failed to fetch matches');
           setData([]);
         }

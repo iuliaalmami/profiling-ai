@@ -48,10 +48,6 @@ const ProfileMatch = () => {
       setLoading(true);
       try {
         // Step 1: Get match scores and cv_ids
-        console.log('[ProfileMatch] Making request to:', `http://127.0.0.1:8000/api/v1/matches/${chatId}`);
-        console.log('[ProfileMatch] Using token:', token);
-        console.log('[ProfileMatch] Authorization header:', `Bearer ${token}`);
-        
         const matchesRes = await fetch(`http://127.0.0.1:8000/api/v1/matches/${chatId}`, {
           method: 'GET',
           headers: { 
@@ -60,11 +56,7 @@ const ProfileMatch = () => {
           },
         });
 
-        console.log('[ProfileMatch] Response status:', matchesRes.status);
-        console.log('[ProfileMatch] Response headers:', Object.fromEntries(matchesRes.headers.entries()));
-
         if (matchesRes.status === 403) {
-          console.log('[ProfileMatch] Access denied - user does not own this match');
           setAccessDenied(true);
           setLoading(false);
           return;
@@ -75,8 +67,6 @@ const ProfileMatch = () => {
           throw new Error(`Failed to fetch matches: ${matchesRes.status}`);
         }
 
-        console.log('[ProfileMatch] Successfully fetched matches - user has access');
-
         const matchesData = await matchesRes.json();
 
         // Extract job prompt from first match (since all matches have the same job_prompt)
@@ -84,8 +74,6 @@ const ProfileMatch = () => {
           setJobPrompt(matchesData[0].job_prompt);
         } else if (matchesData.job_prompt) {
           setJobPrompt(matchesData.job_prompt);
-        } else {
-          console.log('[matches] No job_prompt found in response');
         }
 
         // Step 2: For each match, fetch candidate details
@@ -149,8 +137,6 @@ const ProfileMatch = () => {
                     // Fallback to other possible role fields
                     candidateRole = cvData.last_job_title || cvData.role || candidateRole;
                   }
-                } else {
-                  console.warn(`[matches] No CV data found for ${match.cv_id}`);
                 }
 
                 return {
@@ -194,11 +180,6 @@ const ProfileMatch = () => {
             const sortedFallback = fallbackMatches.sort((a, b) => b.score - a.score);
             enrichedMatches.push(...sortedFallback);
           }
-        } else {
-          console.log(
-            '[matches] Response is not an array. Available keys:',
-            Object.keys(matchesData),
-          );
         }
 
         setMatches(enrichedMatches);
@@ -302,7 +283,6 @@ const ProfileMatch = () => {
             type="link"
             className="remove-link"
             onClick={() => {
-              console.log(`[matches] Remove CV: ${record.cv_id}`);
               // TODO: Implement remove functionality
             }}
           >
