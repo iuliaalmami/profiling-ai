@@ -71,15 +71,15 @@ const JobDescription = () => {
             return groups;
           }, {});
           
-          const transformedMatches = Object.values(jobGroups);
+          const transformedMatches = Object.values(jobGroups) as JobMatch[];
           console.log('[JobDescription] Grouped jobs:', transformedMatches);
           
           console.log('[JobDescription] All transformed matches:', transformedMatches);
           
           // Filter out jobs with 0 matches and sort by latest first
           const filteredAndSorted = transformedMatches
-            .filter(job => job.matches > 0)
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            .filter((job: JobMatch) => job.matches! > 0)
+            .sort((a: JobMatch, b: JobMatch) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime());
           
           console.log('[JobDescription] Filtered and sorted:', filteredAndSorted);
           setData(filteredAndSorted);
@@ -135,7 +135,14 @@ const JobDescription = () => {
               </Typography.Text>
             </div>
           ) : filteredData.length ? (
-            filteredData.map(job => <JobCard key={job.id} job={job} />)
+            filteredData.map(job => <JobCard key={job.id} job={{
+              id: job.id,
+              title: job.title,
+              skills: job.skills || [],
+              description: job.description,
+              postedDate: job.postedDate || '',
+              matches: job.matches || 0
+            }} />)
           ) : (
             <div style={{ textAlign: 'center', padding: '50px' }}>
               <Typography.Text>
