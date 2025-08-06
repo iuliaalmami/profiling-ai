@@ -1,0 +1,132 @@
+@use '../../styles/variables.scss' as vars;
+
+.login-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, vars.$light-blue 0%, vars.$light-grey-bg 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+
+  .login-container {
+    width: 100%;
+    max-width: 400px;
+
+    .login-card {
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: none;
+      overflow: hidden;
+
+      .ant-card-body {
+        padding: 40px 32px;
+      }
+
+      .login-header {
+        text-align: center;
+        margin-bottom: 32px;
+
+        h2 {
+          font-family: vars.$font-primary;
+          color: vars.$light-black-2;
+          margin-bottom: 8px;
+          font-weight: 600;
+        }
+
+        .ant-typography {
+          color: vars.$grey-2;
+          font-size: 14px;
+        }
+      }
+
+      .ant-tabs {
+        .ant-tabs-tab {
+          font-weight: 500;
+          font-size: 16px;
+          padding: 12px 0;
+
+          &.ant-tabs-tab-active {
+            .ant-tabs-tab-btn {
+              color: vars.$blue;
+              font-weight: 600;
+            }
+          }
+        }
+
+        .ant-tabs-ink-bar {
+          background: vars.$blue;
+        }
+
+        .ant-tabs-content-holder {
+          padding-top: 24px;
+        }
+      }
+
+      .ant-form {
+        .ant-form-item {
+          margin-bottom: 20px;
+
+          .ant-input-affix-wrapper,
+          .ant-input {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s ease;
+
+            &:hover {
+              border-color: vars.$blue;
+            }
+
+            &:focus,
+            &.ant-input-affix-wrapper-focused {
+              border-color: vars.$blue;
+              box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+            }
+
+            .ant-input {
+              border: none;
+              box-shadow: none;
+            }
+          }
+
+          .ant-form-item-explain-error {
+            font-size: 12px;
+            margin-top: 4px;
+          }
+        }
+
+        .ant-btn {
+          height: 44px;
+          border-radius: 8px;
+          font-weight: 500;
+          font-size: 16px;
+          margin-top: 8px;
+
+          &.ant-btn-primary {
+            background: vars.$blue;
+            border-color: vars.$blue;
+
+            &:hover {
+              background: vars.$blue-2;
+              border-color: vars.$blue-2;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 480px) {
+  .login-page {
+    padding: 16px;
+
+    .login-container {
+      .login-card {
+        .ant-card-body {
+          padding: 32px 24px;
+        }
+      }
+    }
+  }
+}

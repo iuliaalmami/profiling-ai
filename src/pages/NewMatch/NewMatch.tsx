@@ -19,7 +19,7 @@ const NewMatchPage = () => {
         <div className="new-match-header-row">
           <Typography.Title level={3}>New Talent Search</Typography.Title>
           <Button onClick={handleCancel} type="default">
-            Cancel
+            New Match
           </Button>
         </div>
       </div>

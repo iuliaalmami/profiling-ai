@@ -10,8 +10,6 @@ const DashboardPage = () => {
 
   const items = [
     { key: '1', label: 'Job Description' },
-    { key: '2', label: 'Profiles' },
-    { key: '3', label: 'Trends' },
   ];
 
   return (
@@ -37,8 +35,6 @@ const DashboardPage = () => {
 
       <div className="tab-content-container">
         {activeKey === '1' && <JobDescription />}
-        {activeKey === '2' && <p>profiles content</p>}
-        {activeKey === '3' && <p>trends content</p>}
       </div>
     </div>
   );

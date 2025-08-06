@@ -6,6 +6,7 @@ import Sider from 'antd/es/layout/Sider';
 import './AiSideChat.scss';
 import { useChat, type Message } from '@ai-sdk/react';
 import { useChatHistory } from '../../hooks/useChatHistory';
+import { useAuth } from '../../contexts/AuthContext';
 import { Markdown } from '../Markdown/Markdown';
 
 const { Title, Text, Paragraph } = Typography;
@@ -23,7 +24,9 @@ const AiSideChat = ({
   autoSendContext = false,
   autoClearContext = false,
 }: AiSideChatProps) => {
+  const { token } = useAuth();
   const inputRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Use chatId if provided, otherwise fallback to generic session
   const sessionId = chatId || 'ai-sidebar-session';
@@ -36,9 +39,17 @@ const AiSideChat = ({
   const location = useLocation();
   const previousPropsRef = useRef<{ autoSendContext?: boolean; autoClearContext?: boolean }>({});
 
+  // Auto-scroll function
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
     id: sessionId,
     api: 'http://127.0.0.1:8000/api/v1/smart-chat/stream',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
     initialMessages: initialMessages as Message[],
     experimental_prepareRequestBody({ messages }) {
       const lastMessage = messages[messages.length - 1];
@@ -54,6 +65,11 @@ const AiSideChat = ({
       return body;
     },
   });
+
+  // Auto-scroll to bottom when messages change or loading state changes
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
 
   // Auto-send context message when component loads with candidate name
   useEffect(() => {
@@ -237,6 +253,7 @@ const AiSideChat = ({
                 </div>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
         </div>
 

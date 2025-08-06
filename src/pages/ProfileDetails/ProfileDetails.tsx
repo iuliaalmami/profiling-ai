@@ -1,6 +1,7 @@
 import { Breadcrumb, Button, Typography, Card, Avatar, Row, Col, Spin, Tag } from 'antd';
 import './ProfileDetails.scss';
 import AiSideChat from '../../components/AiSideChat/AiSideChat';
+import { useAuth } from '../../contexts/AuthContext';
 
 import avatar from '../../assets/avatar.png';
 import { useParams, useLocation } from 'react-router-dom';
@@ -21,6 +22,7 @@ interface CVData {
 }
 
 const ProfileDetails = () => {
+  const { token } = useAuth();
   const { cvId } = useParams<{ cvId: string }>();
   const location = useLocation();
 
@@ -48,7 +50,10 @@ const ProfileDetails = () => {
         // Fetch CV data
         const cvResponse = await fetch(`http://127.0.0.1:8000/api/v1/cv/${cvId}`, {
           method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
         });
 
         if (cvResponse.ok) {
@@ -65,7 +70,10 @@ const ProfileDetails = () => {
               `http://127.0.0.1:8000/api/v1/match/${matchData.matchId}`,
               {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
               },
             );
 

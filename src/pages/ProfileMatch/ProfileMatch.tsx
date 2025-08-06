@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb } from 'antd';
+import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb, Alert } from 'antd';
+import { useAuth } from '../../contexts/AuthContext';
 import './ProfileMatch.scss';
 import AiSideChat from '../../components/AiSideChat/AiSideChat';
 
@@ -11,11 +12,13 @@ const ProfileMatch = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { chatId } = useParams<{ chatId: string }>();
+  const { token } = useAuth();
 
   const prompt = location.state?.prompt;
   const [matches, setMatches] = useState<MatchData[]>([]);
   const [jobPrompt, setJobPrompt] = useState('');
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   interface MatchData {
     cv_id: string;
@@ -45,14 +48,34 @@ const ProfileMatch = () => {
       setLoading(true);
       try {
         // Step 1: Get match scores and cv_ids
+        console.log('[ProfileMatch] Making request to:', `http://127.0.0.1:8000/api/v1/matches/${chatId}`);
+        console.log('[ProfileMatch] Using token:', token);
+        console.log('[ProfileMatch] Authorization header:', `Bearer ${token}`);
+        
         const matchesRes = await fetch(`http://127.0.0.1:8000/api/v1/matches/${chatId}`, {
           method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
         });
 
+        console.log('[ProfileMatch] Response status:', matchesRes.status);
+        console.log('[ProfileMatch] Response headers:', Object.fromEntries(matchesRes.headers.entries()));
+
+        if (matchesRes.status === 403) {
+          console.log('[ProfileMatch] Access denied - user does not own this match');
+          setAccessDenied(true);
+          setLoading(false);
+          return;
+        }
+
         if (!matchesRes.ok) {
+          console.error('[ProfileMatch] API error:', matchesRes.status, matchesRes.statusText);
           throw new Error(`Failed to fetch matches: ${matchesRes.status}`);
         }
+
+        console.log('[ProfileMatch] Successfully fetched matches - user has access');
 
         const matchesData = await matchesRes.json();
 
@@ -77,7 +100,10 @@ const ProfileMatch = () => {
           try {
             const cvBatchRes = await fetch('http://127.0.0.1:8000/api/v1/cvs', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
               body: JSON.stringify({ cv_ids: cvIds }),
             });
 
@@ -286,6 +312,38 @@ const ProfileMatch = () => {
       ),
     },
   ];
+
+  // Show access denied message if user doesn't own this match
+  if (accessDenied) {
+    return (
+      <Layout className="matches-layout">
+        <Content className="matches-left">
+          <div className="matches-page-header">
+            <Breadcrumb items={[{ title: 'Home' }, { title: 'New Talent Search' }]} />
+            
+            <div style={{ marginTop: 24 }}>
+              <Alert
+                message="Access Denied"
+                description="You don't have permission to view this match. This match belongs to another user or doesn't exist."
+                type="error"
+                showIcon
+                action={
+                  <Space>
+                    <Button size="small" danger onClick={() => navigate('/dashboard')}>
+                      Go to Dashboard
+                    </Button>
+                    <Button size="small" type="primary" onClick={() => navigate('/chat/new')}>
+                      Create New Search
+                    </Button>
+                  </Space>
+                }
+              />
+            </div>
+          </div>
+        </Content>
+      </Layout>
+    );
+  }
 
   return (
     <Layout className="matches-layout">

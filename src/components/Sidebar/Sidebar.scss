@@ -15,19 +15,40 @@
     flex-direction: row;
     gap: 10px;
     text-decoration: none;
-    color: var.$blue;
+    color: var.$light-black-2;
     padding: 13px 16px;
-    font-family: 14px;
+    font-size: 14px;
     line-height: 22px;
     font-weight: 400;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin: 0 8px;
+
+    &:hover {
+      background-color: var.$light-grey-4;
+      color: var.$blue;
+      
+      .dashboard-icon,
+      .profiles-icon {
+        color: var.$blue;
+      }
+    }
 
     &.active {
       background-color: var.$light-blue;
+      color: var.$blue;
+      font-weight: 500;
+      
+      .dashboard-icon,
+      .profiles-icon {
+        color: var.$blue;
+      }
     }
 
     .dashboard-icon,
     .profiles-icon {
-      color: var.$blue;
+      color: var.$light-black-2;
+      transition: color 0.2s ease;
     }
   }
 }

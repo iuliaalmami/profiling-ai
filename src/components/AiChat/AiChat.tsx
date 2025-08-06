@@ -6,6 +6,7 @@ import './AiChat.scss';
 import { Markdown } from '../Markdown/Markdown';
 import { useNavigate } from 'react-router-dom';
 import { useChatHistory } from '../../hooks/useChatHistory';
+import { useAuth } from '../../contexts/AuthContext';
 
 const suggestions = [
   'Find 2 Data Engineers with availability from May 1',
@@ -19,7 +20,9 @@ interface AIChatProps {
 }
 
 const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
+  const { token } = useAuth();
   const inputRef = useRef<InputRef>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const isChatFromUrl = !!initialChatId;
@@ -38,6 +41,9 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
   const { messages, input, handleInputChange, handleSubmit, setMessages, setInput } = useChat({
     id: chatId ?? undefined,
     api: 'http://127.0.0.1:8000/api/v1/smart-chat/stream',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
     initialMessages: initialMessages as Message[],
     onResponse: async response => {
       const newChatId = response.headers.get('x-chat-id');
@@ -62,6 +68,15 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
       return body;
     },
   });
+
+  // Auto-scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -95,7 +110,9 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
   // Polling function for match status
   const pollMatchStatus = async (currentChatId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/match/status/${currentChatId}`);
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/match/status/${currentChatId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
 
       if (data.status === 'completed') {
@@ -262,6 +279,7 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
               </div>
             );
           })}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Match processing loading UI */}

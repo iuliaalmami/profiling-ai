@@ -1,11 +1,12 @@
 import { Card, Tag, Typography, Space, Tooltip } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 
 const { Text, Paragraph } = Typography;
 
 interface Job {
+  id: number;
   title: string;
-  client: string;
   skills: string[];
   description: string;
   postedDate: string;
@@ -13,56 +14,90 @@ interface Job {
 }
 
 const JobCard = ({ job }: { job: Job }) => {
-  const { title, client, skills, description, postedDate, matches } = job;
+  const { id, title, skills, description, postedDate, matches } = job;
 
   return (
-    <Card title={`${title} - ${client}`}>
-      <Space size={[8, 8]} wrap>
-        {skills.map(skill => (
-          <Tag
-            key={skill}
-            closable
-            onClose={e => {
-              e.preventDefault();
-            }}
-          >
-            {skill}
-          </Tag>
-        ))}
-      </Space>
-
-      <Paragraph>{description}</Paragraph>
-
-      <Space size="middle">
-        <div
-          style={{
-            padding: '4px 12px',
-            borderRadius: 4,
-            minWidth: 100,
-            textAlign: 'center',
-          }}
-        >
-          <Text strong>{postedDate}</Text>
+    <Card 
+      size="small"
+      style={{ 
+        marginBottom: '8px',
+        border: '1px solid #f0f0f0',
+        borderRadius: '6px',
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
+      }}
+      bodyStyle={{ padding: '12px 16px' }}
+    >
+      {/* Horizontal layout: Left section (title + metadata) | Right section (skills) */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: '24px'
+      }}>
+        {/* Left: Title with match count and date below */}
+        <div style={{ flex: '0 0 auto', minWidth: '250px' }}>
+          <div style={{ marginBottom: '6px' }}>
+            <Link 
+              to={`/matches/${id}`} 
+              style={{ 
+                textDecoration: 'none',
+                color: '#1890ff',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.textDecoration = 'underline';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.textDecoration = 'none';
+              }}
+            >
+              {title}
+            </Link>
+          </div>
+          
+          <div style={{ 
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <Tooltip title={`${matches} matches`}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <UserOutlined style={{ fontSize: '12px' }} />
+                <Text strong style={{ fontSize: '12px' }}>{matches} matches</Text>
+              </div>
+            </Tooltip>
+            
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              {postedDate}
+            </Text>
+          </div>
         </div>
 
-        <Tooltip title={`${matches} matches`}>
-          <div
-            style={{
-              border: '1px solid #d9d9d9',
-              padding: '4px 12px',
-              borderRadius: 4,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              minWidth: 100,
-              justifyContent: 'center',
-            }}
-          >
-            <UserOutlined />
-            <Text strong>{matches} matches</Text>
-          </div>
-        </Tooltip>
-      </Space>
+        {/* Right: Skills */}
+        <div style={{ flex: '1', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+          {skills.length > 0 && (
+            <Space size={[4, 4]} wrap>
+              {skills.slice(0, 4).map(skill => (
+                <Tag key={skill} size="small" color="blue">
+                  {skill}
+                </Tag>
+              ))}
+              {skills.length > 4 && (
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  +{skills.length - 4} more
+                </Text>
+              )}
+            </Space>
+          )}
+        </div>
+      </div>
     </Card>
   );
 };
