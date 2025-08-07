@@ -53,12 +53,13 @@ const Header = () => {
       </div>
 
       <div className="header-right">
-        <SearchOutlined className="icon" />
+        {/* Icons temporarily hidden - uncomment when functionality is ready */}
+        {/* <SearchOutlined className="icon" />
         <Badge count={11} className="icon">
           <BellOutlined className="badge-icon" />
         </Badge>
         <QuestionCircleOutlined className="icon" />
-        <UserOutlined className="icon" />
+        <UserOutlined className="icon" /> */}
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
           <div className="avatar" style={{ cursor: 'pointer' }}>
             <Avatar src={avatar} />
