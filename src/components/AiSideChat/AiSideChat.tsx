@@ -7,6 +7,7 @@ import './AiSideChat.scss';
 import { useChat, type Message } from '@ai-sdk/react';
 import { useChatHistory } from '../../hooks/useChatHistory';
 import { useAuth } from '../../contexts/AuthContext';
+import { handleTokenExpiration, API_BASE_URL } from '../../utils/api';
 import { Markdown } from '../Markdown/Markdown';
 
 const { Title, Text, Paragraph } = Typography;
@@ -46,11 +47,19 @@ const AiSideChat = ({
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
     id: sessionId,
-    api: 'http://127.0.0.1:8000/api/v1/smart-chat/stream',
+    api: `${API_BASE_URL}/api/v1/smart-chat/stream`,
     headers: {
       'Authorization': `Bearer ${token}`
     },
     initialMessages: initialMessages as Message[],
+    onError: (error) => {
+      console.error('[AiSideChat] Error during streaming:', error);
+      // Check if it's a 401 error from the response
+      if (error.message && error.message.includes('401')) {
+        console.log('[AiSideChat] Token expired during streaming, handling...');
+        handleTokenExpiration();
+      }
+    },
     experimental_prepareRequestBody({ messages }) {
       const lastMessage = messages[messages.length - 1];
       const body: any = { message: lastMessage?.content ?? '' };
@@ -157,7 +166,7 @@ const AiSideChat = ({
             <RobotOutlined className="ai-icon" />
             <div>
               <Text strong>Curious about your matches?</Text>
-              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+              <Paragraph type="secondary" className="ai-chat-summary">
                 Feel free to ask me for more details about any profile in the current list.
               </Paragraph>
             </div>
@@ -263,7 +272,7 @@ const AiSideChat = ({
             suffix={
               <SendOutlined
                 onClick={() => handleSubmit(new Event('submit'))}
-                style={{ cursor: 'pointer' }}
+                className="ai-chat-clickable"
               />
             }
           />

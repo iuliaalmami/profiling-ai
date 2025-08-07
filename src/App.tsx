@@ -10,6 +10,7 @@ import ProfileMatch from './pages/ProfileMatch/ProfileMatch';
 import ProfileDetails from './pages/ProfileDetails/ProfileDetails';
 import LoginPage from './pages/Login/Login';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+
 import { AuthProvider } from './contexts/AuthContext';
 
 function App() {

@@ -1,58 +1,30 @@
-@use '../../styles/variables.scss' as vars;
-
 .job-description-wrapper {
-  background-color: vars.$white;
+  .job-description-content {
+    .search-section {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
 
-  .ant-card {
-    border: none;
-    padding: 16px 20px;
-    margin-bottom: 12px;
-    &-head {
-      border: none;
-      padding: 0 20px;
-      min-height: auto;
-      &-title {
-        font-family: vars.$font-primary;
-        font-size: 16px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: 24px;
+      &__input {
+        max-width: 300px;
       }
     }
-    &-body {
-      box-shadow: 0px -1px 0px 0px vars.$light-grey inset;
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-      padding: 0 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      *:not(.ant-tag):not(.ant-tag *) {
-        font-family: vars.$font-primary;
-        margin: 0;
-        font-size: 14px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 22px;
-      }
 
-      .ant-tag {
-        color: vars.$light-black-2;
-        span {
-          color: vars.$dark-2;
+    .job-description-list {
+      .loading-container {
+        text-align: center;
+        padding: 50px;
+
+        &__text {
+          display: block;
+          margin-top: 16px;
         }
       }
-      .ant-typography {
-        color: vars.$grey;
-      }
 
-      .ant-space-item {
-        font-family: vars.$font-primary;
-        font-size: 14px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 22px;
-        color: rgba(0, 0, 0, 0.45);
+      .empty-container {
+        text-align: center;
+        padding: 50px;
       }
     }
   }

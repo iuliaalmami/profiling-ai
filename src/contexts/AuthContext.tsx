@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { validateStoredToken } from '../utils/api';
 
 // Helper function to decode JWT token
 const decodeJWT = (token: string): User | null => {
@@ -50,15 +51,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing auth token on app load
+    // Check for existing auth token on app load and validate it
     const savedToken = localStorage.getItem('auth_token');
-    if (savedToken) {
+    if (savedToken && validateStoredToken()) {
       const userData = decodeJWT(savedToken);
       setToken(savedToken);
       setUser(userData);
       setIsAuthenticated(true);
+    } else {
+      // Token is invalid or expired, clear state
+      setToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
     }
     setIsLoading(false); // Done checking
+
+    // Listen for token expiration events from API calls
+    const handleTokenExpired = () => {
+      console.log('[AuthContext] Token expired event received, logging out...');
+      setToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+
+    window.addEventListener('token-expired', handleTokenExpired);
+
+    // Cleanup listener on unmount
+    return () => {
+      window.removeEventListener('token-expired', handleTokenExpired);
+    };
   }, []);
 
   const login = (newToken: string) => {
@@ -70,7 +91,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = () => {
+    // Clear all authentication and session data
     localStorage.removeItem('auth_token');
+    sessionStorage.clear(); // Clear any session data like chatId
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);

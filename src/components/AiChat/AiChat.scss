@@ -213,7 +213,7 @@
   background-color: vars.$light-grey-2;
 
   .matches-left {
-    flex: 3;
+    flex: 2;
     background: vars.$white;
     padding: 32px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
@@ -265,8 +265,10 @@
   }
 
   .matches-right {
-    flex: 1;
+    flex: 1.2;
     background: vars.$white;
+    min-width: 400px;
+    max-width: 500px;
   }
 }
 
@@ -346,4 +348,8 @@
 .match-completed-loader {
   background: #f6ffed;
   border-color: #b7eb8f;
+}
+
+.ai-chat-scrollable {
+  margin-top: 16px;
 }

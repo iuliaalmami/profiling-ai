@@ -51,4 +51,23 @@
       transition: color 0.2s ease;
     }
   }
+
+  // Button-specific styling for New Match
+  .nav-button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    
+    &:hover {
+      .new-match-icon {
+        color: var.$blue;
+      }
+    }
+    
+    .new-match-icon {
+      color: var.$light-black-2;
+      transition: color 0.2s ease;
+    }
+  }
 }

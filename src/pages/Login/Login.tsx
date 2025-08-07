@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Button, Input, Form, Typography, message, Card, Tabs } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { api, API_BASE_URL } from '../../utils/api';
 import './Login.scss';
 
 const { Title, Text } = Typography;
@@ -22,11 +23,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const endpoint = isSignup ? '/signup' : '/login';
-      const response = await fetch(`http://127.0.0.1:8000/api/v1${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
+      const response = await api.public.post(`${API_BASE_URL}/api/v1${endpoint}`, values);
 
       if (response.ok) {
         const data = await response.json();
@@ -36,8 +33,10 @@ const LoginPage = () => {
         const token = data.token || data.access_token || 'dummy_token';
         login(token);
         
-        // Navigate to dashboard
-        navigate('/dashboard');
+        // Navigate to intended page or dashboard
+        const redirectPath = sessionStorage.getItem('redirect_after_login') || '/dashboard';
+        sessionStorage.removeItem('redirect_after_login'); // Clean up
+        navigate(redirectPath);
       } else {
         const errorData = await response.json();
         message.error(errorData.message || `${isSignup ? 'Signup' : 'Login'} failed. Please try again.`);
@@ -149,7 +148,7 @@ const LoginPage = () => {
             <Title level={2}>Welcome to Profiling AI</Title>
             <Text type="secondary">
               {activeTab === 'login' 
-                ? 'Sign in to access your profile management dashboard' 
+                ? 'Test Account: admin@admin.com / admin123' 
                 : 'Create an account to get started'
               }
             </Text>

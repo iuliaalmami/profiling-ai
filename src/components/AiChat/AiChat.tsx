@@ -7,6 +7,7 @@ import { Markdown } from '../Markdown/Markdown';
 import { useNavigate } from 'react-router-dom';
 import { useChatHistory } from '../../hooks/useChatHistory';
 import { useAuth } from '../../contexts/AuthContext';
+import { handleTokenExpiration, api, API_BASE_URL } from '../../utils/api';
 
 const suggestions = [
   'Find 2 Data Engineers with availability from May 1',
@@ -40,7 +41,7 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
 
   const { messages, input, handleInputChange, handleSubmit, setMessages, setInput } = useChat({
     id: chatId ?? undefined,
-    api: 'http://127.0.0.1:8000/api/v1/smart-chat/stream',
+    api: `${API_BASE_URL}/api/v1/smart-chat/stream`,
     headers: {
       'Authorization': `Bearer ${token}`
     },
@@ -52,6 +53,14 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
         sessionStorage.setItem('chatId', newChatId);
         // Update URL to reflect the new chat ID
         navigate(`/chat/${newChatId}`, { replace: true });
+      }
+    },
+    onError: (error) => {
+      console.error('[AiChat] Error during streaming:', error);
+      // Check if it's a 401 error from the response
+      if (error.message && error.message.includes('401')) {
+        console.log('[AiChat] Token expired during streaming, handling...');
+        handleTokenExpiration();
       }
     },
     experimental_prepareRequestBody({ messages }) {
@@ -110,9 +119,7 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
   // Polling function for match status
   const pollMatchStatus = async (currentChatId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/match/status/${currentChatId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await api.get(`${API_BASE_URL}/api/v1/match/status/${currentChatId}`);
       const data = await response.json();
 
       if (data.status === 'completed') {
@@ -314,7 +321,7 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
                 type="primary"
                 size="large"
                 onClick={handleShowMatches}
-                style={{ marginTop: '16px' }}
+                className="ai-chat-scrollable"
               >
                 Show Matches
               </Button>

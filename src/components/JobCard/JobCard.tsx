@@ -1,8 +1,9 @@
 import { Card, Tag, Typography, Space, Tooltip } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
+import './JobCard.scss';
 
-const { Text, Paragraph } = Typography;
+const { Text } = Typography;
 
 interface Job {
   id: number;
@@ -14,83 +15,52 @@ interface Job {
 }
 
 const JobCard = ({ job }: { job: Job }) => {
-  const { id, title, skills, description, postedDate, matches } = job;
+  const { id, title, skills, postedDate, matches } = job;
 
   return (
     <Card 
       size="small"
-      style={{ 
-        marginBottom: '8px',
-        border: '1px solid #f0f0f0',
-        borderRadius: '6px',
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
-      }}
+      className="job-card"
       styles={{ body: { padding: '12px 16px' } }}
     >
       {/* Horizontal layout: Left section (title + metadata) | Right section (skills) */}
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        gap: '24px'
-      }}>
+      <div className="job-card__content">
         {/* Left: Title with match count and date below */}
-        <div style={{ flex: '0 0 auto', minWidth: '250px' }}>
-          <div style={{ marginBottom: '6px' }}>
+        <div className="job-card__left-section">
+          <div className="job-card__title-container">
             <Link 
               to={`/matches/${id}`} 
-              style={{ 
-                textDecoration: 'none',
-                color: '#1890ff',
-                fontSize: '14px',
-                fontWeight: 'bold'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.textDecoration = 'underline';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.textDecoration = 'none';
-              }}
+              className="job-card__title-link"
             >
               {title}
             </Link>
           </div>
           
-          <div style={{ 
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
+          <div className="job-card__metadata">
             <Tooltip title={`${matches} matches`}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
+              <div className="job-card__match-info">
                 <UserOutlined style={{ fontSize: '12px' }} />
                 <Text strong style={{ fontSize: '12px' }}>{matches} matches</Text>
               </div>
             </Tooltip>
             
-            <Text type="secondary" style={{ fontSize: '12px' }}>
+            <Text type="secondary" className="job-card__date">
               {postedDate}
             </Text>
           </div>
         </div>
 
         {/* Right: Skills */}
-        <div style={{ flex: '1', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+        <div className="job-card__right-section">
           {skills.length > 0 && (
             <Space size={[4, 4]} wrap>
               {skills.slice(0, 4).map(skill => (
-                <Tag key={skill} size="small" color="blue">
+                <Tag key={skill} color="blue">
                   {skill}
                 </Tag>
               ))}
               {skills.length > 4 && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
+                <Text type="secondary" className="job-card__skills-more">
                   +{skills.length - 4} more
                 </Text>
               )}

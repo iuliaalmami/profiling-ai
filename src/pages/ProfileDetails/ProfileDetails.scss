@@ -1,224 +1,294 @@
-@use '../../styles/variables.scss' as vars;
-
 .profile-details {
+  padding: 24px;
+  max-width: none;
+  width: 100%;
+  height: 100%;
+
+  &__loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+  }
+
+  &__export-actions {
+    margin-top: 8px;
+    padding: 0;
+  }
+}
+
+.profile-details-header {
+  margin-bottom: 24px;
+}
+
+.profile-details-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.candidate-name {
+  margin-bottom: 4px !important;
+}
+
+.candidate-meta {
+  margin-bottom: 0 !important;
+  color: #666;
+}
+
+.export-cv-btn {
+  // Button styles if needed
+}
+
+.profile-details-content {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  height: calc(100vh - 200px);
+}
+
+.profile-details-content-left {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;
+  gap: 16px;
+  overflow-y: auto;
+  padding-right: 12px;
+}
 
-  .profile-details-header {
-    padding: 16px 24px;
-    background: vars.$white;
-    margin-bottom: 16px;
+.profile-details-content-right {
+  width: 400px;
+  flex-shrink: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  
+  // Ensure the chat component fills the height
+  .ai-assistant-wrapper {
+    height: 100% !important;
+  }
+}
+
+// Card styles
+.job-match-card,
+.contact-info-card,
+.summary-card,
+.expertise-card,
+.experience-card {
+  margin-bottom: 16px;
+}
+
+.job-match-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.job-title {
+  font-weight: 600;
+  display: block;
+}
+
+.job-role {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.match-score {
+  background: #f0f8f0;
+  border: 1px solid #52c41a;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-weight: 500;
+  
+  span {
+    color: #52c41a;
+    font-weight: 600;
+  }
+}
+
+.job-description {
+  margin: 0;
+  color: #666;
+}
+
+.info-grid {
+  // Styles for contact info grid
+}
+
+.label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.value {
+  margin: 0 !important;
+  color: #333;
+}
+
+.skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.skill-tag {
+  // Skill tag styles
+}
+
+// Skills and Experience Row Layout
+.skills-experience-row {
+  .ant-col {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-
-    .profile-details-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      .profile-info {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-
-        .candidate-name {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-        }
-
-        .candidate-meta {
-          margin: 0;
-          font-size: 13px;
-          color: vars.$grey;
-        }
-      }
-
-      .export-cv-btn {
-        background-color: #1890ff;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        font-size: 14px;
-        cursor: pointer;
-
-        &:hover {
-          background-color: #1677c0;
-        }
-      }
-    }
   }
-
-  .profile-details-content {
+  
+  .expertise-card,
+  .experience-card {
+    height: 100%;
     display: flex;
-    gap: 16px;
-
-    .profile-details-content-left {
+    flex-direction: column;
+    
+    .ant-card-body {
+      flex: 1;
       display: flex;
       flex-direction: column;
+    }
+    
+    .skills-container,
+    .experience-list {
       flex: 1;
-      gap: 16px;
-
-      .job-match-card {
-        padding: 16px;
-        background: vars.$white;
-
-        .job-match-info {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-
-          .job-title {
-            font-weight: 600;
-            color: vars.$grey;
-          }
-
-          .job-role {
-            font-size: 16px;
-            font-weight: 500;
-            display: block;
-          }
-
-          .match-score {
-            font-size: 14px;
-            color: vars.$light-black-2;
-
-            span {
-              font-weight: 600;
-              color: green;
-            }
-          }
-        }
-
-        .job-description {
-          margin-top: 8px;
-          font-size: 14px;
-          color: vars.$grey;
-        }
-      }
-
-      .contact-info-card {
-        padding: 16px;
-        background: vars.$white;
-        border-radius: 8px;
-
-        .info-row {
-          display: flex;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 24px;
-
-          .label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: vars.$light-black-2;
-          }
-
-          .value,
-          a {
-            font-size: 14px;
-            color: vars.$grey;
-          }
-
-          a {
-            color: #1890ff;
-            text-decoration: none;
-
-            &:hover {
-              text-decoration: underline;
-            }
-          }
-        }
-      }
-
-      .summary-card {
-        padding: 16px;
-        background: vars.$white;
-        border-radius: 8px;
-
-        h5 {
-          font-size: 16px;
-          font-weight: 600;
-          margin-bottom: 8px;
-        }
-
-        p {
-          font-size: 14px;
-          color: vars.$grey;
-          line-height: 1.6;
-        }
-      }
-
-      .expertise-industries {
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
-
-        .expertise-card,
-        .industries-card {
-          flex: 1;
-          padding: 16px;
-          background: vars.$white;
-          border-radius: 8px;
-
-          h5 {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 8px;
-          }
-
-          ul {
-            list-style-type: disc;
-            padding-left: 20px;
-
-            li {
-              font-size: 14px;
-              color: vars.$grey;
-              margin-bottom: 4px;
-            }
-          }
-        }
-      }
-    }
-
-    .profile-details-content-right {
-      width: 300px;
     }
   }
 }
 
-// Skills section styling
-.skills-container {
-  .skills-tags {
+// Modern Experience Section Styling
+.experience-card {
+  .experience-list {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 8px;
+    flex-direction: column;
+    gap: 20px;
+  }
 
-    .skill-tag {
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 6px;
-      margin: 0;
-      
-      &.ant-tag {
-        border: 1px solid #d9d9d9;
-        background: #f6f8ff;
-        color: #1890ff;
-        
-        &:hover {
-          background: #e6f7ff;
-          border-color: #40a9ff;
-        }
-      }
+  .experience-item {
+    position: relative;
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+    
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    
+    &:first-child {
+      padding-top: 0;
+    }
+    
+    // Add a subtle left border accent
+    &::before {
+      content: '';
+      position: absolute;
+      left: -24px;
+      top: 16px;
+      width: 3px;
+      height: calc(100% - 32px);
+      background: linear-gradient(to bottom, #1890ff, #40a9ff);
+      border-radius: 2px;
+    }
+  }
+
+  .experience-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    gap: 16px;
+  }
+
+  .experience-role {
+    font-weight: 600;
+    font-size: 16px;
+    color: #1f1f1f;
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .experience-duration {
+    font-size: 12px;
+    color: #8c8c8c;
+    background: #f5f5f5;
+    padding: 4px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .experience-company {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+    display: block;
+    
+    &::before {
+      content: '@';
+      margin-right: 4px;
+      color: #1890ff;
+      font-weight: 600;
     }
   }
 }
 
-.ant-card {
-  border-radius: 0 !important;
+// Responsive design
+@media (max-width: 768px) {
+  .profile-details-content {
+    flex-direction: column;
+  }
+  
+  .profile-details-content-right {
+    width: 100%;
+  }
+  
+  .profile-details-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  // Mobile layout adjustments
+  .skills-experience-row {
+    .ant-col {
+      margin-bottom: 16px;
+    }
+  }
+
+  // Mobile experience styling adjustments
+  .experience-card {
+    .experience-item {
+      padding-left: 16px;
+      
+      &::before {
+        left: 0;
+      }
+    }
+    
+    .experience-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    
+    .experience-duration {
+      align-self: flex-start;
+    }
+  }
 }

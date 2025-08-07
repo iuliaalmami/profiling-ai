@@ -12,13 +12,12 @@ import {
   Upload,
   message,
   Input,
-  Descriptions,
   Tag,
-  Divider,
 } from 'antd';
 import type { ColumnsType, SortOrder } from 'antd/es/table/interface';
 import { InboxOutlined, SearchOutlined } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { api, API_BASE_URL } from '../../utils/api';
 import './Profile.scss';
 
 const { Content } = Layout;
@@ -31,10 +30,16 @@ interface ProfileData {
   role?: string;
   last_updated?: string;
   skills?: string[];
+  experience?: Array<{
+    role?: string;
+    title?: string;
+    company?: string;
+    duration?: string;
+  }>;
 }
 
 const ProfilePage = () => {
-  const { token } = useAuth();
+  const { } = useAuth();
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
   const [filteredProfiles, setFilteredProfiles] = useState<ProfileData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,18 +52,14 @@ const ProfilePage = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [showAllSkills, setShowAllSkills] = useState(false);
+  const [showAllExperience, setShowAllExperience] = useState(false);
 
   useEffect(() => {
     const fetchProfiles = async () => {
       setLoading(true);
       try {
-        const profilesRes = await fetch(`http://127.0.0.1:8000/api/v1/profiles`, {
-          method: 'GET',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-        });
+        const profilesRes = await api.get(`${API_BASE_URL}/api/v1/profiles`);
 
         if (!profilesRes.ok) {
           throw new Error(`Failed to fetch profiles: ${profilesRes.status}`);
@@ -79,6 +80,7 @@ const ProfilePage = () => {
               profile.created_at ||
               new Date().toISOString(),
             skills: profile.skills || [],
+            experience: profile.experience || [],
           }));
 
           setProfiles(processedProfiles);
@@ -160,12 +162,7 @@ const ProfilePage = () => {
     try {
       const cvId = parseInt(profile.cv_id!.toString());
       
-      const response = await fetch('http://127.0.0.1:8000/api/v1/cvs', {
-        method: 'DELETE',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+      const response = await api.delete(`${API_BASE_URL}/api/v1/cvs`, {
         body: JSON.stringify({ cv_ids: [cvId] }),
       });
 
@@ -223,12 +220,7 @@ const ProfilePage = () => {
 
   const batchDeleteConfirmed = async (cvIds: number[]) => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/v1/cvs', {
-        method: 'DELETE',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+      const response = await api.delete(`${API_BASE_URL}/api/v1/cvs`, {
         body: JSON.stringify({ cv_ids: cvIds }),
       });
 
@@ -257,11 +249,27 @@ const ProfilePage = () => {
   const handleShowDetails = (profile: ProfileData) => {
     setSelectedProfile(profile);
     setIsDetailsModalOpen(true);
+    // Reset collapse states when opening modal
+    setShowAllSkills(false);
+    setShowAllExperience(false);
   };
 
   const handleCloseDetails = () => {
     setIsDetailsModalOpen(false);
     setSelectedProfile(null);
+  };
+
+  // Helper function to calculate how many skills to show for 2 rows
+  const getSkillsToShow = (skills: string[]) => {
+    if (showAllSkills) return skills;
+    // Assume roughly 4-5 skills per row, so 8-10 for 2 rows
+    return skills.slice(0, 8);
+  };
+
+  // Helper function to get experiences to show (first 2)
+  const getExperiencesToShow = (experiences: any[]) => {
+    if (showAllExperience) return experiences;
+    return experiences.slice(0, 2); // Get first 2 experiences
   };
 
   const getExperienceLevel = (profile: ProfileData): string => {
@@ -309,12 +317,10 @@ const ProfilePage = () => {
         formData.append('file', file);
       });
 
-      const response = await fetch('http://127.0.0.1:8000/api/v1/upload-cv', {
-        method: 'POST',
+      const response = await api.post(`${API_BASE_URL}/api/v1/upload-cv`, formData, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          // Don't set Content-Type for FormData, let browser set it
         },
-        body: formData,
       });
 
       if (response.ok) {
@@ -379,7 +385,7 @@ const ProfilePage = () => {
       key: 'name',
       sorter: (a: ProfileData, b: ProfileData) => a.name.localeCompare(b.name),
       sortDirections: ['ascend', 'descend', 'ascend'] as SortOrder[],
-      render: (text: string) => <span style={{ fontWeight: 500 }}>{text}</span>,
+              render: (text: string) => <span className="profile-page__table-name">{text}</span>,
     },
     {
       title: 'Role',
@@ -580,8 +586,8 @@ const ProfilePage = () => {
       {/* Profile Details Modal */}
       <Modal
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Typography.Title level={4} style={{ margin: 0 }}>
+          <div className="profile-page__modal-title">
+            <Typography.Title level={4} className="profile-page__modal-title-text">
               Profile Details
             </Typography.Title>
             {selectedProfile && (
@@ -596,117 +602,116 @@ const ProfilePage = () => {
             Close
           </Button>,
         ]}
-        width={800}
+        width={1000}
         className="profile-details-modal"
       >
         {selectedProfile && (
-          <div className="profile-details-content">
-            <Descriptions
-              title="Basic Information"
-              bordered
-              column={2}
-              size="small"
-              style={{ marginBottom: '24px' }}
-            >
-              <Descriptions.Item label="Full Name" span={2}>
-                <Typography.Text strong style={{ fontSize: '16px' }}>
-                  {selectedProfile.name}
-                </Typography.Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Role/Position" span={2}>
-                <Typography.Text style={{ fontSize: '14px' }}>
-                  {selectedProfile.role || 'No role specified'}
-                </Typography.Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Profile ID">
-                {selectedProfile.id}
-              </Descriptions.Item>
-              <Descriptions.Item label="CV ID">
-                {selectedProfile.cv_id || 'N/A'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Last Updated" span={2}>
-                {selectedProfile.last_updated 
-                  ? new Date(selectedProfile.last_updated).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : 'Unknown'}
-              </Descriptions.Item>
-            </Descriptions>
+          <div className="profile-modal-content">
+            {/* Basic Information */}
+            <div className="section">
+              <div className="section-title">Basic Information</div>
+              <div className="info-grid">
+                <div className="label">Full Name:</div>
+                <div className="value">{selectedProfile.name}</div>
+                
+                <div className="label">Role/Position:</div>
+                <div className="value">{selectedProfile.role || 'No role specified'}</div>
+                
+                <div className="label">Profile ID:</div>
+                <div className="value">{selectedProfile.id}</div>
+                
+                <div className="label">Last Updated:</div>
+                <div className="value">
+                  {selectedProfile.last_updated 
+                    ? new Date(selectedProfile.last_updated).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : 'Unknown'}
+                </div>
+              </div>
+            </div>
 
-            <Divider />
-
-            <div className="skills-section">
-              <Typography.Title level={5} style={{ marginBottom: '16px' }}>
-                Skills & Expertise
-              </Typography.Title>
+            {/* Skills */}
+            <div className="section">
+              <div className="section-title">Skills & Expertise</div>
               {selectedProfile.skills && selectedProfile.skills.length > 0 ? (
-                <div className="skills-container">
-                  {selectedProfile.skills.map((skill, index) => (
-                    <Tag
-                      key={index}
-                      color={
-                        index % 5 === 0 ? 'blue' :
-                        index % 5 === 1 ? 'green' :
-                        index % 5 === 2 ? 'orange' :
-                        index % 5 === 3 ? 'purple' : 'cyan'
-                      }
-                      style={{ 
-                        marginBottom: '8px',
-                        fontSize: '13px',
-                        padding: '4px 8px',
-                        borderRadius: '6px'
-                      }}
+                <div>
+                  <div className="skills-grid">
+                    {getSkillsToShow(selectedProfile.skills).map((skill, index) => (
+                      <div key={index} className="skill-tag">
+                        {skill}
+                      </div>
+                    ))}
+                  </div>
+                  {selectedProfile.skills.length > 8 && (
+                    <button 
+                      className="show-more-btn"
+                      onClick={() => setShowAllSkills(!showAllSkills)}
                     >
-                      {skill}
-                    </Tag>
-                  ))}
+                      {showAllSkills ? `Show Less` : `Show More (${selectedProfile.skills.length - 8} more)`}
+                    </button>
+                  )}
                 </div>
               ) : (
-                <Typography.Text type="secondary">
-                  No skills listed for this profile
-                </Typography.Text>
+                <div>No skills listed for this profile</div>
               )}
             </div>
 
-            <Divider />
+            {/* Experience */}
+            <div className="section">
+              <div className="section-title">Experience</div>
+              {selectedProfile.experience && selectedProfile.experience.length > 0 ? (
+                <div>
+                  <div className="experience-list">
+                    {getExperiencesToShow(selectedProfile.experience).map((exp, index) => (
+                      <div key={index} className="experience-item">
+                        <div className="experience-left">
+                          <span className="role">{exp.role}</span>
+                          {exp.company && <span className="company">at {exp.company}</span>}
+                        </div>
+                        {exp.duration && (
+                          <div className="experience-right">
+                            <span className="duration">{exp.duration}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {selectedProfile.experience.length > 2 && (
+                    <button 
+                      className="show-more-btn"
+                      onClick={() => setShowAllExperience(!showAllExperience)}
+                    >
+                      {showAllExperience ? `Show Less` : `Show More (${selectedProfile.experience.length - 2} more)`}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div>No experience information available</div>
+              )}
+            </div>
 
-            <div className="summary-section">
-              <Typography.Title level={5} style={{ marginBottom: '16px' }}>
-                Profile Summary
-              </Typography.Title>
-              <Row gutter={[16, 16]}>
-                <Col span={8}>
-                  <div className="summary-item">
-                    <Typography.Text type="secondary">Total Skills</Typography.Text>
-                    <br />
-                    <Typography.Text strong style={{ fontSize: '18px', color: '#1890ff' }}>
-                      {selectedProfile.skills?.length || 0}
-                    </Typography.Text>
-                  </div>
-                </Col>
-                <Col span={8}>
-                  <div className="summary-item">
-                    <Typography.Text type="secondary">Profile Status</Typography.Text>
-                    <br />
-                    <Tag color="green" style={{ fontSize: '12px' }}>
-                      Active
-                    </Tag>
-                  </div>
-                </Col>
-                <Col span={8}>
-                  <div className="summary-item">
-                    <Typography.Text type="secondary">Experience Level</Typography.Text>
-                    <br />
-                    <Typography.Text strong>
-                      {getExperienceLevel(selectedProfile)}
-                    </Typography.Text>
-                  </div>
-                </Col>
-              </Row>
+            {/* Summary */}
+            <div className="section">
+              <div className="section-title">Profile Summary</div>
+              <div className="summary-grid">
+                <div className="summary-card">
+                  <span className="summary-label">Total Skills</span>
+                  <span className="summary-value">{selectedProfile.skills?.length || 0}</span>
+                </div>
+                <div className="summary-card">
+                  <span className="summary-label">Profile Status</span>
+                  <span className="summary-value">Active</span>
+                </div>
+                <div className="summary-card">
+                  <span className="summary-label">Experience Level</span>
+                  <span className="summary-value">{getExperienceLevel(selectedProfile)}</span>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -1,0 +1,64 @@
+.job-card {
+  margin-bottom: 8px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+  &__content {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  &__left-section {
+    flex: 0 0 auto;
+    min-width: 250px;
+  }
+
+  &__title-container {
+    margin-bottom: 6px;
+  }
+
+  &__title-link {
+    text-decoration: none;
+    color: #1890ff;
+    font-size: 14px;
+    font-weight: bold;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__metadata {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__match-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__date {
+    font-size: 12px;
+  }
+
+  &__right-section {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  &__skills-container {
+    margin-bottom: 8px;
+  }
+
+  &__skills-more {
+    font-size: 12px;
+  }
+}

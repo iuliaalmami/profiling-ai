@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import JobCard from '../JobCard/JobCard';
 import { Typography, Spin, message, Input } from 'antd';
 import { useAuth } from '../../contexts/AuthContext';
+import { api, API_BASE_URL } from '../../utils/api';
 
 interface JobMatch {
   id: number;
@@ -31,13 +32,7 @@ const JobDescription = () => {
       
       try {
         setLoading(true);
-        const response = await fetch(`http://127.0.0.1:8000/api/v1/user/matches`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+        const response = await api.get(`${API_BASE_URL}/api/v1/user/matches`);
 
         if (response.ok) {
           const matches = await response.json();
@@ -98,28 +93,23 @@ const JobDescription = () => {
   return (
     <div className="job-description-wrapper">
       <div className="job-description-content">
-        <div style={{ 
-          marginBottom: '16px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '12px' 
-        }}>
+        <div className="search-section">
           <Typography.Text strong>Search Jobs:</Typography.Text>
           <Input.Search
             placeholder="Search by job title..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ maxWidth: '300px' }}
+            className="search-section__input"
             allowClear
           />
         </div>
 
         <div className="job-description-list">
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '50px' }}>
+            <div className="loading-container">
               <Spin size="large" />
-              <Typography.Text style={{ display: 'block', marginTop: '16px' }}>
-                Loading your chats...
+              <Typography.Text className="loading-container__text">
+                Loading your history...
               </Typography.Text>
             </div>
           ) : filteredData.length ? (
@@ -132,7 +122,7 @@ const JobDescription = () => {
               matches: job.matches || 0
             }} />)
           ) : (
-            <div style={{ textAlign: 'center', padding: '50px' }}>
+            <div className="empty-container">
               <Typography.Text>
                 {data.length === 0 ? 'No chats found. Start a new chat to create your first job match!' : 'No jobs match your current filters.'}
               </Typography.Text>

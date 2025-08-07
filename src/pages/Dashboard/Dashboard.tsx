@@ -8,6 +8,11 @@ const DashboardPage = () => {
   const [activeKey, setActiveKey] = useState('1');
   const navigate = useNavigate();
 
+  const handleNewMatch = () => {
+    sessionStorage.removeItem('chatId');
+    navigate('/chat/new');
+  };
+
   const items = [
     { key: '1', label: 'Job Description' },
   ];
@@ -17,7 +22,7 @@ const DashboardPage = () => {
       <div className="dashboard-header">
         <div className="dashboard-header-top">
           <h3>Dashboard</h3>
-          <Button type="primary" className="new-match-btn" onClick={() => navigate('/chat/new')}>
+          <Button type="primary" className="new-match-btn" onClick={handleNewMatch}>
             New match
           </Button>
         </div>
