@@ -1,11 +1,7 @@
 import {
-  BellOutlined,
-  SearchOutlined,
-  UserOutlined,
-  QuestionCircleOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
-import { Avatar, Badge, Typography, Dropdown } from 'antd';
+import { Avatar, Typography, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';

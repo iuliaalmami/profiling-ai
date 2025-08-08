@@ -13,4 +13,9 @@ export default defineConfig({
   define: {
     __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
   },
+  preview: {
+    allowedHosts: [
+      'aicv-frontend.ashymoss-b2d15dcf.eastus.azurecontainerapps.io'
+    ]
+  }
 });
