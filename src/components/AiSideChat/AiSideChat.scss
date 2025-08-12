@@ -61,61 +61,7 @@ aside {
   font-family: vars.$font-primary;
   height: 100vh;
 
-  h5 {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 16px;
-  }
 
-  .ai-assistant-info {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 24px;
-
-    .ai-icon {
-      font-size: 24px;
-      color: vars.$grey-3;
-      margin-top: 4px;
-    }
-
-    p {
-      margin: 0;
-    }
-
-    .ant-typography {
-      margin: 0;
-    }
-  }
-
-  .ai-suggestions {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: auto;
-
-    .ai-suggestion-tile {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      background-color: vars.$light-grey-bg;
-      border: none;
-      font-weight: 500;
-      text-align: left;
-      padding: 14px;
-      border-radius: 8px;
-      line-height: 1.4;
-      white-space: normal;
-      word-break: break-word;
-      width: 100%;
-      height: 100%;
-      .anticon {
-        flex-shrink: 0;
-        margin-top: 4px;
-      }
-    }
-  }
 
   .ai-middle {
     flex: 1;
@@ -151,7 +97,68 @@ aside {
     flex: 1;
     overflow-y: auto;
     padding-bottom: 8px;
-    margin-top: 20px;
+    
+    // ai-top section now appears at the top of scrollable area
+    .ai-top {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid vars.$light-grey;
+      
+      h5 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+      
+      .ai-assistant-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 24px;
+
+        .ai-icon {
+          font-size: 24px;
+          color: vars.$grey-3;
+          margin-top: 4px;
+        }
+
+        p {
+          margin: 0;
+        }
+
+        .ant-typography {
+          margin: 0;
+        }
+      }
+      
+      .ai-suggestions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .ai-suggestion-tile {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+          background-color: vars.$light-grey-bg;
+          border: none;
+          font-weight: 500;
+          text-align: left;
+          padding: 14px;
+          border-radius: 8px;
+          line-height: 1.4;
+          white-space: normal;
+          word-break: break-word;
+          width: 100%;
+          height: 100%;
+          .anticon {
+            flex-shrink: 0;
+            margin-top: 4px;
+          }
+        }
+      }
+    }
 
     .chat-bubble {
       display: flex;

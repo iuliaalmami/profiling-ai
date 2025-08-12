@@ -159,76 +159,75 @@ const AiSideChat = ({
   return (
     <Sider className="matches-right" width={300} theme="light">
       <div className="ai-assistant-wrapper">
-        <div className="ai-top">
-          <Title level={5}>AI Assistant</Title>
-
-          <div className="ai-assistant-info">
-            <RobotOutlined className="ai-icon" />
-            <div>
-              <Text strong>Curious about your matches?</Text>
-              <Paragraph type="secondary" className="ai-chat-summary">
-                Feel free to ask me for more details about any profile in the current list.
-              </Paragraph>
-            </div>
-          </div>
-
-          <div className="ai-suggestions">
-            {autoSendContext && candidateName ? (
-              // Suggestions for individual candidate context
-              <>
-                <Button
-                  className="ai-suggestion-tile"
-                  block
-                  onClick={() =>
-                    handleSuggestionClick(`What are ${candidateName}'s strongest skills?`)
-                  }
-                >
-                  What are {candidateName}'s strongest skills?
-                  <RightOutlined />
-                </Button>
-                <Button
-                  className="ai-suggestion-tile"
-                  block
-                  onClick={() => handleSuggestionClick(`How does ${candidateName} fit this role?`)}
-                >
-                  How does {candidateName} fit this role?
-                  <RightOutlined />
-                </Button>
-              </>
-            ) : (
-              // General suggestions for matches overview
-              <>
-                <Button
-                  className="ai-suggestion-tile"
-                  block
-                  onClick={() => handleSuggestionClick('Tell me about the top 3 candidates')}
-                >
-                  Tell me about the top 3 candidates
-                  <RightOutlined />
-                </Button>
-                <Button
-                  className="ai-suggestion-tile"
-                  block
-                  onClick={() =>
-                    handleSuggestionClick('What skills are missing in the lower-scored candidates?')
-                  }
-                >
-                  What skills are missing in the lower-scored candidates?
-                  <RightOutlined />
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-
         <div className="ai-middle">
           <div className="ai-chat-messages">
+            <div className="ai-top">
+              <Title level={5}>AI Assistant</Title>
+
+              <div className="ai-assistant-info">
+                <RobotOutlined className="ai-icon" />
+                <div>
+                  <Text strong>Curious about your matches?</Text>
+                  <Paragraph type="secondary" className="ai-chat-summary">
+                    Feel free to ask me for more details about any profile in the current list.
+                  </Paragraph>
+                </div>
+              </div>
+
+              <div className="ai-suggestions">
+                {autoSendContext && candidateName ? (
+                  // Suggestions for individual candidate context
+                  <>
+                    <Button
+                      className="ai-suggestion-tile"
+                      block
+                      onClick={() =>
+                        handleSuggestionClick(`What are ${candidateName}'s strongest skills?`)
+                      }
+                    >
+                      What are {candidateName}'s strongest skills?
+                      <RightOutlined />
+                    </Button>
+                    <Button
+                      className="ai-suggestion-tile"
+                      block
+                      onClick={() => handleSuggestionClick(`How does ${candidateName} fit this role?`)}
+                    >
+                      How does {candidateName} fit this role?
+                      <RightOutlined />
+                    </Button>
+                  </>
+                ) : (
+                  // General suggestions for matches overview
+                  <>
+                    <Button
+                      className="ai-suggestion-tile"
+                      block
+                      onClick={() => handleSuggestionClick('Tell me about the top 3 candidates')}
+                    >
+                      Tell me about the top 3 candidates
+                      <RightOutlined />
+                    </Button>
+                    <Button
+                      className="ai-suggestion-tile"
+                      block
+                      onClick={() =>
+                        handleSuggestionClick('What skills are missing in the lower-scored candidates?')
+                      }
+                    >
+                      What skills are missing in the lower-scored candidates?
+                      <RightOutlined />
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
             {messages.map((msg, idx) => {
-              const bubbleClass = `chat-bubble ${msg.role}`;
+              const bubbleClass = `chat-bubble ${msg.role === 'ai' ? 'assistant' : msg.role}`;
 
               return (
                 <div key={idx} className={bubbleClass}>
-                  {msg.role === 'assistant' ? (
+                  {msg.role === 'assistant' || msg.role === 'ai' ? (
                     <>
                       <div className="assistant-message-content">
                         <RobotOutlined className="chat-icon" />
@@ -240,8 +239,8 @@ const AiSideChat = ({
                   ) : (
                     <>
                       <div className="user-message-content">
-                        <span className="message-text">{msg.content}</span>
                         <UserOutlined className="chat-icon" />
+                        <span className="message-text">{msg.content}</span>
                       </div>
                     </>
                   )}
