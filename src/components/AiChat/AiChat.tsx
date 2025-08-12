@@ -246,13 +246,13 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
         <div className="chat-messages">
           {messages.map((msg, idx) => {
             const { response, prompt } =
-              msg.role === 'assistant' || msg.role === 'ai' ? extractTextParts(msg.content) : {};
+              msg.role === 'assistant' ? extractTextParts(msg.content) : {};
 
-            const bubbleClass = `chat-bubble ${msg.role === 'ai' ? 'assistant' : msg.role}${(msg.role === 'assistant' || msg.role === 'ai') && prompt ? ' assistant-final-prompt' : ''}`;
+            const bubbleClass = `chat-bubble ${msg.role}${msg.role === 'assistant' && prompt ? ' assistant-final-prompt' : ''}`;
 
             return (
               <div key={idx} className={bubbleClass}>
-                {msg.role === 'assistant' || msg.role === 'ai' ? (
+                {msg.role === 'assistant' ? (
                   <>
                     <div className="assistant-message-content">
                       <RobotOutlined className="chat-icon" />

@@ -223,11 +223,11 @@ const AiSideChat = ({
               </div>
             </div>
             {messages.map((msg, idx) => {
-              const bubbleClass = `chat-bubble ${msg.role === 'ai' ? 'assistant' : msg.role}`;
+              const bubbleClass = `chat-bubble ${msg.role}`;
 
               return (
                 <div key={idx} className={bubbleClass}>
-                  {msg.role === 'assistant' || msg.role === 'ai' ? (
+                  {msg.role === 'assistant' ? (
                     <>
                       <div className="assistant-message-content">
                         <RobotOutlined className="chat-icon" />
