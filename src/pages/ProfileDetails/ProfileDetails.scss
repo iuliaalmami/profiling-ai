@@ -1,8 +1,10 @@
 .profile-details {
   padding: 24px;
-  max-width: none;
+  max-width: 100vw; // Ensure it doesn't exceed viewport width
   width: 100%;
   height: 100%;
+  overflow-x: hidden; // Prevent horizontal scrolling
+  box-sizing: border-box; // Include padding in width calculation
 
   &__loading-container {
     display: flex;
@@ -52,6 +54,10 @@
   gap: 24px;
   align-items: flex-start;
   height: calc(100vh - 200px);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; // Prevent horizontal scrolling
+  box-sizing: border-box; // Include padding in width calculation
 }
 
 .profile-details-content-left {
@@ -60,19 +66,26 @@
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
+  overflow-x: hidden; // Prevent horizontal scrolling
   padding-right: 12px;
+  min-width: 0; // Allow flex item to shrink below content size
+  max-width: calc(100% - 500px); // Give more space to the chat (was 424px)
 }
 
 .profile-details-content-right {
-  width: 400px;
+  width: 500px; // Increased from 400px to give chat more space
+  min-width: 500px; // Prevent shrinking
   flex-shrink: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden; // Prevent any overflow issues
   
-  // Ensure the chat component fills the height
+  // Ensure the chat component fills the height and has proper layout
   .ai-assistant-wrapper {
     height: 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
 
@@ -248,14 +261,47 @@
   }
 }
 
-// Responsive design
-@media (max-width: 768px) {
+// Responsive breakpoints to prevent horizontal scrolling
+@media (max-width: 1200px) {
   .profile-details-content {
-    flex-direction: column;
+    flex-direction: column; // Stack vertically on smaller screens
+    gap: 16px;
+    
+    .profile-details-content-left {
+      max-width: 100%; // Use full width when stacked
+      padding-right: 0;
+    }
+    
+    .profile-details-content-right {
+      width: 100%; // Use full width when stacked
+      min-width: 100%;
+      height: 600px; // Increased height when stacked to accommodate the wider chat
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-details {
+    padding: 16px; // Reduce padding on mobile
+    
+    .profile-details-header-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      
+      .export-cv-btn {
+        align-self: flex-start;
+      }
+    }
   }
   
-  .profile-details-content-right {
-    width: 100%;
+  .profile-details-content {
+    height: auto; // Allow natural height on mobile
+    min-height: calc(100vh - 200px);
+    
+    .profile-details-content-right {
+      height: 500px; // Fixed height on mobile
+    }
   }
   
   .profile-details-header-row {

@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api, API_BASE_URL } from '../utils/api';
 import { type Message } from '@ai-sdk/react';
 
-export function useChatHistory(chatId: string, disabled = false) {
+export function useChatHistory(chatId: string, disabled = false, isProfileChat = false) {
   const { } = useAuth();
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -17,7 +17,12 @@ export function useChatHistory(chatId: string, disabled = false) {
 
     const loadChatHistory = async () => {
       try {
-        const response = await api.get(`${API_BASE_URL}/api/v1/chat/history/${chatId}`);
+        // Use different endpoint based on chat type
+        const endpoint = isProfileChat 
+          ? `${API_BASE_URL}/api/v1/profile-chat/${chatId}/messages`
+          : `${API_BASE_URL}/api/v1/chat/history/${chatId}`;
+
+        const response = await api.get(endpoint);
 
         if (response.ok) {
           const history = await response.json();
@@ -38,7 +43,7 @@ export function useChatHistory(chatId: string, disabled = false) {
     };
 
     loadChatHistory();
-  }, [chatId, disabled]);
+  }, [chatId, disabled, isProfileChat]);
 
   return [initialMessages, isLoadingHistory] as const;
 }

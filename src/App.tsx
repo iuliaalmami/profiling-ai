@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar/Sidebar';
 import './index.scss';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Profile from './pages/Profile/Profile';
+import ProfileChat from './pages/ProfileChat/ProfileChat';
 import Header from './components/Header/Header';
 import NewMatchPage from './pages/NewMatch/NewMatch';
 import ProfileMatch from './pages/ProfileMatch/ProfileMatch';
@@ -28,6 +29,7 @@ function App() {
                   <Route path="/" element={<Navigate to="/dashboard" />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="profiles" element={<Profile />} />
+                  <Route path="profile-chat/:chatId" element={<ProfileChat />} />
                   <Route path="chat/new" element={<NewMatchPage />} />
                   <Route path="chat/:id" element={<NewMatchPage />} />
                   <Route path="matches/:chatId" element={<ProfileMatch />} />

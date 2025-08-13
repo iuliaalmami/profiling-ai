@@ -421,7 +421,7 @@ const ProfileMatch = () => {
 
           {jobPrompt && (
             <div className="job-description-section profile-match__job-description-section">
-              <Paragraph type="secondary">{jobPrompt}</Paragraph>
+              <Paragraph type="secondary"></Paragraph>
             </div>
           )}
         </div>

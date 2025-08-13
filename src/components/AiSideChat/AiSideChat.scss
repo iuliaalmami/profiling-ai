@@ -1,74 +1,496 @@
 @use '../../styles/variables.scss' as vars;
 
+// Profile chat specific styles (when used in full-page layout)
+// These styles ONLY apply when the component has the ai-side-chat-profile class
+.ai-side-chat-profile {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%; // Ensure it takes full width of its container
+  max-width: 100%; // Prevent overflow
+  // Remove overflow hidden to allow proper scrolling
+  min-height: 0; // Allow flex child to shrink
+  
+  .ai-assistant-wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    // Remove overflow hidden to allow proper scrolling
+    min-height: 0; // Allow flex child to shrink
+    
+    // AI Assistant title - outside scrolling area
+    .ai-assistant-title {
+      flex-shrink: 0;
+      margin-bottom: 20px;
+      margin-top: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      position: relative;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 40px;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        border-radius: 2px;
+      }
+    }
+    
+    .ai-middle {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      // Remove overflow hidden to allow proper scrolling
+      margin-bottom: 0;
+      min-height: 0;
+      width: 100%;
+      max-width: 100%;
+      
+      // Chat messages area - scrollable (includes info, suggestions, and messages)
+      .ai-chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden; // Prevent horizontal scrolling
+        padding-bottom: 0;
+        min-height: 0;
+        max-height: none; // Remove height constraint for profile chat to use full available space
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        height: 100%; // Ensure full height usage
+        
+        // Custom scrollbar for better UX
+        &::-webkit-scrollbar {
+          width: 8px; // Increased from 6px for better visibility
+        }
+        
+        &::-webkit-scrollbar-track {
+          background: #f1f5f9; // Light background for better contrast
+          border-radius: 4px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+          background: #94a3b8; // Darker, more visible scrollbar
+          border-radius: 4px;
+          border: 1px solid #e2e8f0; // Subtle border for definition
+          
+          &:hover {
+            background: #64748b; // Even darker on hover
+          }
+        }
+        
+        // Ensure proper spacing for messages
+        .chat-bubble {
+          margin-bottom: 16px;
+          flex-shrink: 0;
+          animation: fadeInUp 0.3s ease;
+          width: 100%;
+          max-width: 100%;
+          
+          // Ensure message content doesn't overflow
+          .user-message-content,
+          .assistant-message-content {
+            max-width: 100%;
+            width: 100%;
+          }
+          
+          .message-text {
+            max-width: calc(100% - 40px); // Account for icon space
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+        
+        // Loading state
+        .loading {
+          margin-bottom: 16px;
+          flex-shrink: 0;
+        }
+        
+        // Messages end ref for auto-scroll
+        .messages-end-ref {
+          height: 1px;
+          visibility: hidden;
+          flex-shrink: 0;
+        }
+      }
+    }
+
+    .ai-input {
+      margin-top: auto;
+      flex-shrink: 0;
+      position: relative;
+      bottom: 0;
+      width: 100%;
+      max-width: 100%;
+      background: white;
+      border-radius: 12px;
+      padding: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e2e8f0;
+
+      .ant-input {
+        padding: 12px 16px;
+        font-size: 14px;
+        border: none;
+        border-radius: 8px;
+        box-shadow: none;
+        width: 100%;
+        max-width: 100%;
+        
+        &:focus {
+          box-shadow: none;
+          border: none;
+        }
+        
+        &::placeholder {
+          color: #94a3b8;
+          font-style: italic;
+        }
+      }
+
+      .ai-input-suffix {
+        color: #64748b;
+        margin-right: 8px;
+        transition: color 0.2s ease;
+
+        &:hover {
+          color: #3b82f6;
+          transform: scale(1.1);
+        }
+      }
+    }
+  }
+}
+
+// EXISTING STYLES FOR MATCHES PAGE - DO NOT MODIFY
 .matches-right {
   height: 100%;
   display: flex;
   flex-direction: column;
   background: vars.$light-grey;
   border-left: 1px solid vars.$light-grey;
+  min-width: 500px !important; // Ensure minimum width for better text display
+  width: 500px !important; // Set fixed width to prevent text cutting
 }
 
-.ai-chat-container {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  height: 100%;
-  padding: 16px;
-}
-
-.ai-chat-header {
-  flex-shrink: 0;
-  margin-bottom: 16px;
-}
-
-.ai-chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.ai-input {
-  flex-shrink: 0;
-
-  .ant-input {
-    padding: 10px;
-    font-size: 13px;
-  }
-
-  .ant-input-suffix {
-    color: vars.$grey-3;
-
-    &:hover {
-      color: vars.$blue;
-    }
-  }
-}
-
-aside {
-  width: auto !important;
-  max-width: inherit !important;
-}
-
+// Essential styles for the ai-assistant-wrapper (used in both matches and profile chats)
 .ai-assistant-wrapper {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 16px;
+  padding: 20px;
   font-family: vars.$font-primary;
-  height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 
-
+  // AI Assistant title - outside scrolling area
+  .ai-assistant-title {
+    flex-shrink: 0;
+    margin-bottom: 20px;
+    margin-top: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      width: 40px;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      border-radius: 2px;
+    }
+  }
 
   .ai-middle {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    margin-bottom: 16px;
+    overflow: hidden; // Restore original overflow hidden for matches page
+    margin-bottom: 0;
+    min-height: 0;
+    
+    // Chat messages area - scrollable (includes info, suggestions, and messages)
+    .ai-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden; // Prevent horizontal scrolling
+      padding-bottom: 0;
+      min-height: 0;
+      max-height: calc(100vh - 200px); // Restore original height constraint for matches page
+      display: flex;
+      flex-direction: column;
+      width: 100%; // Ensure full width usage
+      
+      // Custom scrollbar for better UX
+      &::-webkit-scrollbar {
+        width: 8px; // Increased from 6px for better visibility
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: #f1f5f9; // Light background for better contrast
+        border-radius: 4px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: #94a3b8; // Darker, more visible scrollbar
+        border-radius: 4px;
+        border: 1px solid #e2e8f0; // Subtle border for definition
+        
+        &:hover {
+          background: #64748b; // Even darker on hover
+        }
+      }
+      
+      // ai-top section now appears at the top of scrollable area
+      .ai-top {
+        margin-bottom: 24px;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
+        flex-shrink: 0;
+        
+        .ai-assistant-info {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          margin-bottom: 20px;
+
+          .ai-icon {
+            font-size: 28px;
+            color: #3b82f6;
+            margin-top: 2px;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            padding: 8px;
+            border-radius: 10px;
+          }
+
+          p {
+            margin: 0;
+          }
+
+          .ant-typography {
+            margin: 0;
+            
+            &.ant-typography-strong {
+              color: #1e293b;
+              font-size: 15px;
+              font-weight: 600;
+              margin-bottom: 4px;
+            }
+            
+            &.ant-typography-secondary {
+              color: #64748b;
+              font-size: 13px;
+              line-height: 1.5;
+            }
+          }
+        }
+        
+        .ai-suggestions {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+
+          .ai-suggestion-tile {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 1px solid #e2e8f0;
+            font-weight: 500;
+            text-align: left;
+            padding: 12px 16px;
+            border-radius: 8px;
+            line-height: 1.4;
+            white-space: normal;
+            word-break: break-word;
+            width: 100%;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            
+            &:hover {
+              background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+              border-color: #cbd5e1;
+              transform: translateY(-1px);
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            
+            .anticon {
+              flex-shrink: 0;
+              color: #64748b;
+              font-size: 14px;
+              transition: color 0.2s ease;
+            }
+            
+            &:hover .anticon {
+              color: #3b82f6;
+            }
+          }
+        }
+      }
+      
+      .chat-bubble {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 14px;
+        line-height: 1.5;
+        font-family: vars.$font-primary;
+        margin-bottom: 16px;
+        flex-shrink: 0;
+        animation: fadeInUp 0.3s ease;
+        width: 100%; // Ensure full width usage
+        max-width: 100%; // Prevent overflow
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        &.user {
+          align-self: flex-end;
+          flex-direction: row-reverse;
+
+          .user-message-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            flex-direction: row-reverse;
+            max-width: 100%;
+            width: 100%;
+
+            .message-text {
+              padding: 12px 16px;
+              border-radius: 18px;
+              background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+              color: white;
+              max-width: calc(100% - 40px); // Account for icon space
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+              box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+              font-weight: 500;
+            }
+          }
+
+          .chat-icon {
+            color: #3b82f6;
+            font-size: 18px;
+            margin-top: 4px;
+            background: white;
+            padding: 4px;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          }
+        }
+
+        &.assistant {
+          align-self: flex-start;
+
+          .assistant-message-content {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            align-items: flex-start;
+            max-width: 100%;
+            width: 100%;
+
+            .message-text {
+              background: white;
+              padding: 12px 16px;
+              border-radius: 18px;
+              max-width: calc(100% - 40px); // Account for icon space
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+              border: 1px solid #e2e8f0;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+              color: #1e293b;
+
+              // Markdown content styles
+              p {
+                margin: 0;
+                font-size: 14px;
+                line-height: 1.5;
+              }
+
+              ul,
+              ol {
+                margin: 6px 0;
+                padding-left: 18px;
+              }
+
+              li {
+                font-size: 14px;
+                line-height: 1.4;
+                margin-bottom: 2px;
+              }
+              
+              code {
+                background: #f1f5f9;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-family: 'Monaco', 'Menlo', monospace;
+                font-size: 13px;
+                color: #dc2626;
+              }
+            }
+          }
+
+          .chat-icon {
+            color: #10b981;
+            font-size: 18px;
+            margin-top: 4px;
+            background: white;
+            padding: 4px;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+          }
+
+          &.loading {
+            .message-text {
+              color: #64748b;
+              font-style: italic;
+              background: #f8fafc;
+
+              .ant-spin {
+                margin-right: 8px;
+              }
+            }
+          }
+        }
+      }
+      
+      // Messages end ref for auto-scroll
+      .messages-end-ref {
+        height: 1px;
+        visibility: hidden;
+        flex-shrink: 0;
+      }
+    }
   }
 
   .ai-input {
@@ -77,177 +499,39 @@ aside {
     position: relative;
     bottom: 0;
     width: 100%;
+    margin-bottom: 0;
+    background: white;
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
 
     .ant-input {
-      padding: 10px;
-      font-size: 13px;
+      padding: 12px 16px;
+      font-size: 14px;
+      border: none;
+      border-radius: 8px;
+      box-shadow: none;
+      
+      &:focus {
+        box-shadow: none;
+        border: none;
+      }
+      
+      &::placeholder {
+        color: #94a3b8;
+        font-style: italic;
+      }
     }
 
     .ant-input-suffix {
-      color: vars.$grey-3;
+      color: #64748b;
+      margin-right: 8px;
+      transition: color 0.2s ease;
 
       &:hover {
-        color: vars.$blue;
-      }
-    }
-  }
-
-  // Chat bubble styles for message differentiation
-  .ai-chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding-bottom: 8px;
-    
-    // ai-top section now appears at the top of scrollable area
-    .ai-top {
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid vars.$light-grey;
-      
-      h5 {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 16px;
-      }
-      
-      .ai-assistant-info {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 24px;
-
-        .ai-icon {
-          font-size: 24px;
-          color: vars.$grey-3;
-          margin-top: 4px;
-        }
-
-        p {
-          margin: 0;
-        }
-
-        .ant-typography {
-          margin: 0;
-        }
-      }
-      
-      .ai-suggestions {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-
-        .ai-suggestion-tile {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 12px;
-          background-color: vars.$light-grey-bg;
-          border: none;
-          font-weight: 500;
-          text-align: left;
-          padding: 14px;
-          border-radius: 8px;
-          line-height: 1.4;
-          white-space: normal;
-          word-break: break-word;
-          width: 100%;
-          height: 100%;
-          .anticon {
-            flex-shrink: 0;
-            margin-top: 4px;
-          }
-        }
-      }
-    }
-
-    .chat-bubble {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      font-size: 13px;
-      line-height: 20px;
-      font-family: vars.$font-primary;
-      margin-bottom: 12px;
-
-      &.user {
-        align-self: flex-end;
-        flex-direction: row-reverse;
-
-        .user-message-content {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          flex-direction: row-reverse;
-
-          .message-text {
-            padding: 8px 12px;
-            border-radius: 12px;
-            background-color: vars.$light-blue;
-            max-width: 300px;
-            word-wrap: break-word;
-          }
-        }
-
-        .chat-icon {
-          color: vars.$dark-2;
-          font-size: 16px;
-          margin-top: 2px;
-        }
-      }
-
-      &.assistant {
-        align-self: flex-start;
-
-        .assistant-message-content {
-          display: flex;
-          flex-direction: row;
-          gap: 8px;
-          align-items: flex-start;
-
-          .message-text {
-            background-color: vars.$light-grey-bg-2;
-            padding: 8px 12px;
-            border-radius: 12px;
-            max-width: 300px;
-            word-wrap: break-word;
-
-            // Markdown content styles
-            p {
-              margin: 0;
-              font-size: 13px;
-              line-height: 20px;
-            }
-
-            ul,
-            ol {
-              margin: 4px 0;
-              padding-left: 16px;
-            }
-
-            li {
-              font-size: 13px;
-              line-height: 18px;
-            }
-          }
-        }
-
-        .chat-icon {
-          color: vars.$dark-2;
-          font-size: 16px;
-          margin-top: 2px;
-          flex-shrink: 0;
-        }
-
-        &.loading {
-          .message-text {
-            color: vars.$grey-2;
-            font-style: italic;
-
-            .ant-spin {
-              margin-right: 8px;
-            }
-          }
-        }
+        color: #3b82f6;
+        transform: scale(1.1);
       }
     }
   }
@@ -261,3 +545,16 @@ aside {
 .ai-chat-clickable {
   cursor: pointer;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

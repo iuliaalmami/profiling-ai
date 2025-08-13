@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button, Tabs } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import JobDescription from '../../components/JobDescription/JobDescription';
+import ProfileChats from '../../components/ProfileChats/ProfileChats';
 import './Dashboard.scss';
 
 const DashboardPage = () => {
@@ -15,6 +16,7 @@ const DashboardPage = () => {
 
   const items = [
     { key: '1', label: 'Job Description' },
+    { key: '2', label: 'Profile Chats' },
   ];
 
   return (
@@ -40,6 +42,7 @@ const DashboardPage = () => {
 
       <div className="tab-content-container">
         {activeKey === '1' && <JobDescription />}
+        {activeKey === '2' && <ProfileChats />}
       </div>
     </div>
   );

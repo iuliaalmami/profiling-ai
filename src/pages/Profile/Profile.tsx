@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   Button,
@@ -40,6 +41,7 @@ interface ProfileData {
 
 const ProfilePage = () => {
   const { } = useAuth();
+  const navigate = useNavigate();
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
   const [filteredProfiles, setFilteredProfiles] = useState<ProfileData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -261,6 +263,27 @@ const ProfilePage = () => {
   const handleCloseDetails = () => {
     setIsDetailsModalOpen(false);
     setSelectedProfile(null);
+  };
+
+  const handleAiChat = async (profile: ProfileData) => {
+    try {
+      // Create a new profile chat
+      const response = await api.post(`${API_BASE_URL}/api/v1/profile-chat`, {
+        cv_id: parseInt(profile.cv_id!.toString()),
+        title: `Chat about ${profile.name}`
+      });
+
+      if (response.ok) {
+        const chatData = await response.json();
+        // Navigate to the profile chat page
+        navigate(`/profile-chat/${chatData.id}`);
+      } else {
+        message.error('Failed to create AI chat. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating AI chat:', error);
+      message.error('An error occurred while creating AI chat. Please try again.');
+    }
   };
 
   // Helper function to calculate how many skills to show for 2 rows
@@ -512,6 +535,13 @@ const ProfilePage = () => {
             onClick={() => handleShowDetails(record)}
           >
             Details
+          </Button>
+          <Button
+            type="link"
+            className="ai-chat-link"
+            onClick={() => handleAiChat(record)}
+          >
+            aiChat
           </Button>
           <Button
             type="link"

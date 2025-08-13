@@ -1,0 +1,99 @@
+.profile-chats-container {
+  padding: 24px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  .profile-chats-header {
+    margin-bottom: 24px;
+    text-align: center;
+
+    .ant-typography {
+      margin-bottom: 8px;
+    }
+  }
+
+  .profile-chats-list {
+    .profile-chat-item {
+      cursor: pointer;
+      padding: 16px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      border: 1px solid #f0f0f0;
+
+      &:hover {
+        background-color: #fafafa;
+        border-color: #d9d9d9;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .chat-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #1890ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+      }
+
+      .ant-list-item-meta-title {
+        margin-bottom: 8px;
+      }
+
+      .ant-list-item-meta-description {
+        .ant-space {
+          .ant-typography {
+            margin: 0;
+            font-size: 12px;
+          }
+        }
+      }
+
+      .ant-list-item-action {
+        margin-left: 16px;
+      }
+    }
+  }
+
+  .profile-chats-loading {
+    text-align: center;
+    padding: 50px;
+  }
+
+  .profile-chats-empty {
+    text-align: center;
+    padding: 50px;
+
+    .ant-empty-description {
+      color: #666;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .profile-chats-container {
+    padding: 16px;
+
+    .profile-chats-list {
+      .profile-chat-item {
+        padding: 12px;
+
+        .ant-list-item-meta {
+          .ant-list-item-meta-title {
+            font-size: 14px;
+          }
+
+          .ant-list-item-meta-description {
+            .ant-typography {
+              font-size: 11px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
