@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api, API_BASE_URL } from '../utils/api';
+import { type Message } from '@ai-sdk/react';
 
 export function useChatHistory(chatId: string, disabled = false) {
   const { } = useAuth();
-  const [initialMessages, setInitialMessages] = useState([]);
+  const [initialMessages, setInitialMessages] = useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
   useEffect(() => {
@@ -20,7 +21,14 @@ export function useChatHistory(chatId: string, disabled = false) {
 
         if (response.ok) {
           const history = await response.json();
-          setInitialMessages(history);
+          
+          // Normalize the role values from API to match Message type
+          const normalizedHistory = history.map((msg: any) => ({
+            ...msg,
+            role: msg.role === 'ai' ? 'assistant' : msg.role
+          }));
+          
+          setInitialMessages(normalizedHistory);
         }
       } catch (error) {
         console.error('Error loading chat history:', error);

@@ -18,9 +18,10 @@ const suggestions = [
 
 interface AIChatProps {
   chatId?: string;
+  preFilledJobDescription?: string;
 }
 
-const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
+const AIChat = ({ chatId: initialChatId = '', preFilledJobDescription }: AIChatProps) => {
   const { token } = useAuth();
   const inputRef = useRef<InputRef>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -93,6 +94,17 @@ const AIChat = ({ chatId: initialChatId = '' }: AIChatProps) => {
     }, 50);
     return () => clearTimeout(timeout);
   }, [messages]);
+
+  // Pre-fill input with job description if provided
+  useEffect(() => {
+    if (preFilledJobDescription) {
+      setInput(preFilledJobDescription);
+      // Focus the input after setting the value
+      setTimeout(() => {
+        inputRef.current?.focus({ cursor: 'start' });
+      }, 100);
+    }
+  }, [preFilledJobDescription, setInput]);
 
   // Monitor messages for "Tool params:" to detect match processing
   useEffect(() => {

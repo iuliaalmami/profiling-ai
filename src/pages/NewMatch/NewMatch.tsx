@@ -1,10 +1,12 @@
 import { Typography, Breadcrumb } from 'antd';
 import './NewMatch.scss';
 import AiChat from '../../components/AiChat/AiChat';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 
 const NewMatchPage = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const preFilledJobDescription = location.state?.preFilledJobDescription;
 
   return (
     <div className="new-match-wrapper">
@@ -19,6 +21,7 @@ const NewMatchPage = () => {
         <AiChat 
           key={id || 'new'} 
           chatId={id === 'new' ? '' : (id || '')} 
+          preFilledJobDescription={preFilledJobDescription}
         />
       </div>
     </div>

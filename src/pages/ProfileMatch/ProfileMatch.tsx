@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb, Alert } from 'antd';
+import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb, Alert, Input, message } from 'antd';
+import { SearchOutlined, CopyOutlined } from '@ant-design/icons';
 // import { useAuth } from '../../contexts/AuthContext'; // Not needed for this component
 import { api, API_BASE_URL } from '../../utils/api';
 import './ProfileMatch.scss';
@@ -17,6 +18,8 @@ const ProfileMatch = () => {
 
   const prompt = location.state?.prompt;
   const [matches, setMatches] = useState<MatchData[]>([]);
+  const [filteredMatches, setFilteredMatches] = useState<MatchData[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [jobPrompt, setJobPrompt] = useState('');
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -29,6 +32,14 @@ const ProfileMatch = () => {
     role?: string;
     last_updated?: string;
     summary?: string; // Include summary from match data
+    job_prompt?: string; // NEW: Job description from backend
+    skills?: string[]; // Add skills for search functionality
+    experience?: Array<{
+      role?: string;
+      title?: string;
+      company?: string;
+      duration?: string;
+    }>;
   }
 
   interface CvData {
@@ -172,6 +183,9 @@ const ProfileMatch = () => {
             role: candidateRole,
             last_updated: match.created_at || match.last_updated || new Date().toISOString(),
             summary: match.summary, // Include the summary from the match data
+            job_prompt: match.job_prompt, // NEW: Include job prompt from backend
+            skills: cvData?.skills || [], // Include skills for search
+            experience: cvData?.experience || [], // Include experience for search
           };
           return result;
         });
@@ -182,6 +196,7 @@ const ProfileMatch = () => {
       }
 
         setMatches(enrichedMatches);
+        setFilteredMatches(enrichedMatches); // Initialize filtered matches
       } catch (error) {
         console.error('[ProfileMatch] Error fetching matches:', error);
         setMatches([]);
@@ -192,6 +207,51 @@ const ProfileMatch = () => {
 
     fetchMatches();
   }, [chatId, prompt, navigate]);
+
+  // Filter matches based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredMatches(matches);
+      return;
+    }
+
+    const filtered = matches.filter(match => {
+      const searchLower = searchTerm.toLowerCase();
+      
+      // Search in name
+      const nameMatch = match.name?.toLowerCase().includes(searchLower) || false;
+      
+      // Search in role
+      const roleMatch = match.role?.toLowerCase().includes(searchLower) || false;
+      
+      // Search in skills
+      const skillsMatch = match.skills?.some(skill => 
+        skill.toLowerCase().includes(searchLower)
+      ) || false;
+      
+      // Search in experience roles and companies
+      const experienceMatch = match.experience?.some(exp => 
+        exp.role?.toLowerCase().includes(searchLower) ||
+        exp.title?.toLowerCase().includes(searchLower) ||
+        exp.company?.toLowerCase().includes(searchLower)
+      ) || false;
+      
+      // Search in summary
+      const summaryMatch = match.summary?.toLowerCase().includes(searchLower) || false;
+      
+      return nameMatch || roleMatch || skillsMatch || experienceMatch || summaryMatch;
+    });
+
+    setFilteredMatches(filtered);
+  }, [searchTerm, matches]);
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
 
   const columns = [
     {
@@ -328,12 +388,34 @@ const ProfileMatch = () => {
               </Title>
             </Col>
             <Col>
-              <Button type="default" onClick={() => {
-                sessionStorage.removeItem('chatId');
-                navigate('/chat/new');
-              }}>
-                New Search
-              </Button>
+              <Space>
+                {jobPrompt && (
+                  <Button 
+                    type="default" 
+                    icon={<CopyOutlined />}
+                    onClick={() => {
+                      // Show success message
+                      message.success('Job description copied! Starting new search...');
+                      
+                      // Navigate to new match with pre-filled job description
+                      sessionStorage.removeItem('chatId');
+                      navigate('/chat/new', {
+                        state: {
+                          preFilledJobDescription: jobPrompt
+                        }
+                      });
+                    }}
+                  >
+                    New Match with Same JD
+                  </Button>
+                )}
+                <Button type="default" onClick={() => {
+                  sessionStorage.removeItem('chatId');
+                  navigate('/chat/new');
+                }}>
+                  New Search
+                </Button>
+              </Space>
             </Col>
           </Row>
 
@@ -348,8 +430,37 @@ const ProfileMatch = () => {
           <Title level={4} className="profile-match__job-description-title">
             Profile Matches
           </Title>
+          
+          {/* Search Section */}
+          <Row justify="space-between" align="middle" className="profile-match__search-section">
+            <Col>
+              <Input.Search
+                placeholder="Search by name, skills, role, company, or summary..."
+                allowClear
+                enterButton={<SearchOutlined />}
+                size="middle"
+                onSearch={handleSearch}
+                onChange={handleSearchChange}
+                value={searchTerm}
+              />
+              <div style={{ marginTop: 8 }}>
+                <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                  Try searching for: "banking", "React", "senior developer", "Google", etc.
+                </Typography.Text>
+              </div>
+            </Col>
+            <Col>
+              {searchTerm && (
+                <Typography.Text type="secondary">
+                  Showing {filteredMatches.length} of {matches.length} matches
+                  {searchTerm && ` for "${searchTerm}"`}
+                </Typography.Text>
+              )}
+            </Col>
+          </Row>
+          
           <Table
-            dataSource={matches}
+            dataSource={filteredMatches}
             columns={columns}
             rowKey="cv_id"
             rowSelection={rowSelection}
@@ -361,7 +472,11 @@ const ProfileMatch = () => {
             rowClassName={() => 'custom-row-spacing'}
             loading={loading}
             locale={{
-              emptyText: loading ? 'Loading matches...' : 'No matches found',
+              emptyText: loading 
+                ? 'Loading matches...' 
+                : searchTerm 
+                  ? `No matches found for "${searchTerm}"` 
+                  : 'No matches found',
             }}
           />
         </div>

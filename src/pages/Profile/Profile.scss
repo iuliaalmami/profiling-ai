@@ -588,3 +588,212 @@
     // Additional styling if needed
   }
 }
+
+// Bulk upload results modal styling
+.bulk-upload-results-modal {
+  .bulk-upload-results {
+    .results-summary {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      
+      .ant-typography {
+        margin-bottom: 16px;
+        color: #262626;
+      }
+      
+      .summary-stat {
+        text-align: center;
+        padding: 16px 8px;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #e8e8e8;
+        
+        .stat-number {
+          font-size: 24px;
+          font-weight: 600;
+          color: #1890ff;
+          margin-bottom: 4px;
+        }
+        
+        .stat-label {
+          font-size: 12px;
+          color: #666;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        
+        &.success .stat-number {
+          color: #52c41a;
+        }
+        
+        &.error .stat-number {
+          color: #f5222d;
+        }
+      }
+      
+      .processing-time {
+        margin-top: 16px;
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        font-style: italic;
+      }
+    }
+    
+    .results-details {
+      .ant-typography {
+        margin-bottom: 16px;
+        color: #262626;
+      }
+      
+      .filename {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 12px;
+        color: #1890ff;
+      }
+      
+      .ant-table {
+        .ant-table-thead > tr > th {
+          background: #fafafa;
+          font-weight: 500;
+        }
+        
+        .ant-table-tbody > tr > td {
+          padding: 12px 8px;
+        }
+      }
+    }
+  }
+}
+
+// Enhanced file summary styling with ZIP support
+.file-summary {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+  border-radius: 6px;
+  
+  .ant-tag {
+    margin: 0;
+    
+    .anticon {
+      margin-right: 4px;
+    }
+    
+    // ZIP file tag styling
+    &:last-child {
+      background: #f0f9ff;
+      border-color: #91d5ff;
+      color: #1890ff;
+      
+      &:hover {
+        background: #e6f7ff;
+        border-color: #69c0ff;
+      }
+    }
+  }
+  
+  // File type summary text
+  .ant-typography {
+    color: #52c41a;
+    font-weight: 500;
+  }
+}
+
+// Inline upload results styling (in upload modal)
+.upload-results {
+  margin-top: 24px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    
+    .ant-typography {
+      margin: 0;
+      color: #262626;
+    }
+    
+    .ant-tag {
+      margin: 0;
+      font-weight: 500;
+    }
+  }
+  
+  .results-summary-inline {
+    margin-bottom: 24px;
+    
+    .summary-stat-inline {
+      text-align: center;
+      padding: 16px 8px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #e8e8e8;
+      
+      .stat-number {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1890ff;
+        margin-bottom: 4px;
+      }
+      
+      .stat-label {
+        font-size: 11px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      &.success .stat-number {
+        color: #52c41a;
+      }
+      
+      &.error .stat-number {
+        color: #f5222d;
+      }
+    }
+    
+    .processing-time-inline {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+      font-style: italic;
+    }
+  }
+  
+  .results-details-inline {
+    .ant-typography {
+      margin-bottom: 16px;
+      color: #262626;
+    }
+    
+    .filename {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 11px;
+      color: #1890ff;
+    }
+    
+    .ant-table {
+      .ant-table-thead > tr > th {
+        background: #fafafa;
+        font-weight: 500;
+        font-size: 12px;
+        padding: 8px 6px;
+      }
+      
+      .ant-table-tbody > tr > td {
+        padding: 8px 6px;
+        font-size: 12px;
+      }
+    }
+  }
+}

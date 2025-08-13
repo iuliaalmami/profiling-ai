@@ -23,4 +23,18 @@
   &__job-description-title {
     margin-bottom: 16px;
   }
+
+  &__search-section {
+    margin-bottom: 16px;
+    
+    .ant-input-search {
+      width: 400px;
+    }
+    
+    .ant-typography {
+      margin-left: 16px;
+    }
+  }
+
+
 }

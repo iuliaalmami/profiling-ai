@@ -15,7 +15,7 @@ import {
   Tag,
 } from 'antd';
 import type { ColumnsType, SortOrder } from 'antd/es/table/interface';
-import { InboxOutlined, SearchOutlined } from '@ant-design/icons';
+import { InboxOutlined, SearchOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, API_BASE_URL } from '../../utils/api';
 import './Profile.scss';
@@ -54,6 +54,10 @@ const ProfilePage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [showAllExperience, setShowAllExperience] = useState(false);
+  
+  // Bulk upload results state
+  const [bulkUploadResults, setBulkUploadResults] = useState<any>(null);
+  const [showBulkResults, setShowBulkResults] = useState(false);
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -293,6 +297,33 @@ const ProfilePage = () => {
     return 'Mid-level';
   };
 
+  // Helper functions for file type handling
+  const hasZipFiles = (): boolean => {
+    return fileList.some(file => 
+      file.type === 'application/zip' || file.name.toLowerCase().endsWith('.zip')
+    );
+  };
+
+  const getFileTypeSummary = (): string => {
+    const pdfCount = fileList.filter(file => 
+      file.type === 'application/pdf'
+    ).length;
+    const zipCount = fileList.filter(file => 
+      file.type === 'application/zip' || file.name.toLowerCase().endsWith('.zip')
+    ).length;
+    
+    if (pdfCount > 0 && zipCount > 0) {
+      return ` (${pdfCount} PDF${pdfCount > 1 ? 's' : ''}, ${zipCount} ZIP${zipCount > 1 ? 's' : ''})`;
+    } else if (zipCount > 0) {
+      return ` (${zipCount} ZIP file${zipCount > 1 ? 's' : ''})`;
+    } else {
+      return ` (${pdfCount} PDF file${pdfCount > 1 ? 's' : ''})`;
+    }
+  };
+
+  // Calculate if this is a bulk upload (multiple files OR any ZIP files)
+  const isBulkUpload = fileList.length > 1 || hasZipFiles();
+
   const handleAddProfile = () => {
     setIsModalOpen(true);
   };
@@ -304,43 +335,86 @@ const ProfilePage = () => {
 
   const handleUpload = async () => {
     if (fileList.length === 0) {
-      message.error('Please select at least one PDF file to upload');
+      message.error('Please select at least one file to upload');
       return;
     }
 
     setUploading(true);
+    
+             // Show appropriate loading message
+    const hasZips = hasZipFiles();
+    
+    if (isBulkUpload) {
+      const messageText = hasZips 
+        ? `Processing ${fileList.length} files (including ZIP extraction)...`
+        : `Processing ${fileList.length} files concurrently...`;
+      message.loading(messageText, 0);
+    }
+    
     try {
       const formData = new FormData();
 
-      // Add all files to FormData
-      fileList.forEach(file => {
-        formData.append('file', file);
-      });
+                    // Use 'files' field name for bulk upload OR if any ZIP files are present
+       // Use 'file' field name only for single PDF files
+       const fieldName = isBulkUpload ? 'files' : 'file';
+       fileList.forEach(file => {
+         formData.append(fieldName, file);
+       });
 
-      const response = await api.post(`${API_BASE_URL}/api/v1/upload-cv`, formData, {
+       // Use bulk upload endpoint for multiple files OR if any ZIP files are present
+       // Single endpoint only for single PDF files
+       const endpoint = isBulkUpload
+         ? `${API_BASE_URL}/api/v1/upload-cv/bulk`
+         : `${API_BASE_URL}/api/v1/upload-cv`;
+
+      const response = await api.post(endpoint, formData, {
         headers: {
           // Don't set Content-Type for FormData, let browser set it
         },
       });
 
       if (response.ok) {
-        await response.json();
-        message.success(`Successfully uploaded ${fileList.length} CV file(s)`);
-
-        // Close modal and refresh profiles
-        handleModalClose();
-        // Refresh the profiles list
-        window.location.reload(); // Simple refresh, could be optimized
+        const result = await response.json();
+        
+                 if (isBulkUpload) {
+           // Handle bulk upload response
+           const { summary } = result;
+           
+           // Show detailed results
+           if (summary.successful_uploads > 0) {
+             message.success(
+               `Bulk upload completed! ${summary.successful_uploads}/${summary.total_files} files uploaded successfully.`
+             );
+           }
+           
+           if (summary.failed_uploads > 0) {
+             message.warning(
+               `${summary.failed_uploads} file(s) failed to upload. Check details below.`
+             );
+           }
+           
+           // Store results and show them in the same modal
+           setBulkUploadResults(result);
+           // Don't close modal yet - show results inline
+         } else {
+           // Handle single upload response
+           message.success(`Successfully uploaded file`);
+           // Close modal and refresh for single upload
+           handleModalClose();
+           window.location.reload();
+         }
       } else {
         const errorText = await response.text();
         console.error('[profiles] Upload failed:', response.status, errorText);
-        message.error('Failed to upload CV files. Please try again.');
+        message.error('Failed to upload files. Please try again.');
       }
     } catch (error) {
       console.error('[profiles] Upload error:', error);
       message.error('An error occurred while uploading. Please try again.');
     } finally {
       setUploading(false);
+      // Clear any loading messages
+      message.destroy();
     }
   };
 
@@ -349,10 +423,12 @@ const ProfilePage = () => {
     multiple: true,
     fileList,
     beforeUpload: (file: any) => {
-      // Validate file type
+      // Validate file type - now supports PDF and ZIP
       const isPDF = file.type === 'application/pdf';
-      if (!isPDF) {
-        message.error(`${file.name} is not a PDF file. Only PDF files are allowed.`);
+      const isZIP = file.type === 'application/zip' || file.name.toLowerCase().endsWith('.zip');
+      
+      if (!isPDF && !isZIP) {
+        message.error(`${file.name} is not a supported file type. Only PDF and ZIP files are allowed.`);
         return false;
       }
 
@@ -541,24 +617,37 @@ const ProfilePage = () => {
 
       {/* Add Profile Modal */}
       <Modal
-        title="Add new profile"
+                 title={isBulkUpload ? "Add Multiple Files (Bulk Upload)" : "Add New File"}
         open={isModalOpen}
         onCancel={handleModalClose}
-        footer={[
-          <Button key="cancel" onClick={handleModalClose}>
-            Cancel
-          </Button>,
-          <Button
-            key="upload"
-            type="primary"
-            loading={uploading}
-            onClick={handleUpload}
-            disabled={fileList.length === 0}
-          >
-            Add profiles
-          </Button>,
-        ]}
-        width={520}
+                 footer={[
+           <Button key="cancel" onClick={handleModalClose}>
+             {bulkUploadResults ? 'Close' : 'Cancel'}
+           </Button>,
+           ...(bulkUploadResults ? [
+             <Button
+               key="done"
+               type="primary"
+               onClick={() => {
+                 handleModalClose();
+                 window.location.reload(); // Refresh profiles after closing
+               }}
+             >
+               Done & Refresh Profiles
+             </Button>
+           ] : [
+             <Button
+               key="upload"
+               type="primary"
+               loading={uploading}
+               onClick={handleUpload}
+               disabled={fileList.length === 0}
+             >
+                               {isBulkUpload ? `Upload ${fileList.length} Files (Bulk)` : 'Upload File'}
+             </Button>
+           ])
+         ]}
+                 width={bulkUploadResults ? 800 : (isBulkUpload ? 600 : 520)}
         className="add-profile-modal"
       >
         <div className="upload-section">
@@ -566,20 +655,131 @@ const ProfilePage = () => {
             <p className="ant-upload-drag-icon">
               <InboxOutlined style={{ fontSize: '48px', color: '#1890ff' }} />
             </p>
-            <p className="ant-upload-text">Click or drag file to this area to upload</p>
+            <p className="ant-upload-text">Click or drag file(s) to this area to upload</p>
             <p className="ant-upload-hint">
-              Support for a single or bulk upload. Strictly prohibit from uploading company data or
-              other band files
+              Support for single or bulk uploads. Multiple files will be processed concurrently for faster uploads.
+              <br />
+              <strong>New:</strong> ZIP files are automatically extracted and processed!
+              <br />
+              <strong>Note:</strong> Strictly prohibit from uploading company data or other band files
             </p>
           </Upload.Dragger>
 
-          {fileList.length > 0 && (
+                               {fileList.length > 0 && (
             <div className="file-summary">
-              <Typography.Text type="secondary">
-                {fileList.length} PDF file(s) selected
-              </Typography.Text>
+              <Row gutter={16} align="middle">
+                <Col>
+                  <Typography.Text type="secondary">
+                    {fileList.length} file(s) selected
+                    {getFileTypeSummary()}
+                  </Typography.Text>
+                </Col>
+                <Col>
+                                     {isBulkUpload && (
+                     <Tag color="blue">
+                       <ClockCircleOutlined /> Bulk upload available (3x faster)
+                     </Tag>
+                   )}
+                  {hasZipFiles() && (
+                    <Tag color="green" style={{ marginLeft: 8 }}>
+                      📦 ZIP files will be auto-extracted
+                    </Tag>
+                  )}
+                </Col>
+              </Row>
             </div>
           )}
+
+           {/* Upload Results Display */}
+           {bulkUploadResults && (
+             <div className="upload-results">
+               <div className="results-header">
+                 <Title level={4}>Upload Results</Title>
+                 <Tag color="green">✓ Upload Complete</Tag>
+               </div>
+               
+               {/* Summary Stats */}
+               <div className="results-summary-inline">
+                 <Row gutter={16}>
+                   <Col span={6}>
+                     <div className="summary-stat-inline">
+                       <div className="stat-number">{bulkUploadResults.summary.total_files}</div>
+                       <div className="stat-label">Total Files</div>
+                     </div>
+                   </Col>
+                   <Col span={6}>
+                     <div className="summary-stat-inline success">
+                       <div className="stat-number">{bulkUploadResults.summary.successful_uploads}</div>
+                       <div className="stat-label">Successful</div>
+                     </div>
+                   </Col>
+                   <Col span={6}>
+                     <div className="summary-stat-inline error">
+                       <div className="stat-number">{bulkUploadResults.summary.failed_uploads}</div>
+                       <div className="stat-label">Failed</div>
+                     </div>
+                   </Col>
+                   <Col span={6}>
+                     <div className="summary-stat-inline">
+                       <div className="stat-number">{bulkUploadResults.summary.success_rate}%</div>
+                       <div className="stat-label">Success Rate</div>
+                     </div>
+                   </Col>
+                 </Row>
+                 <div className="processing-time-inline">
+                   Total processing time: {bulkUploadResults.summary.total_processing_time}s
+                 </div>
+               </div>
+
+               {/* File Details Table */}
+               <div className="results-details-inline">
+                 <Title level={5}>File Details</Title>
+                 <Table
+                   dataSource={bulkUploadResults.results}
+                   columns={[
+                     {
+                       title: 'Filename',
+                       dataIndex: 'filename',
+                       key: 'filename',
+                       render: (text: string) => <span className="filename">{text}</span>,
+                     },
+                     {
+                       title: 'Status',
+                       dataIndex: 'status',
+                       key: 'status',
+                       render: (status: string) => (
+                         <Tag color={status === 'success' ? 'success' : 'error'}>
+                           {status === 'success' ? '✅ Success' : '❌ Failed'}
+                         </Tag>
+                       ),
+                     },
+                     {
+                       title: 'CV ID',
+                       dataIndex: 'cv_id',
+                       key: 'cv_id',
+                       render: (cvId: number) => cvId || '-',
+                     },
+                     {
+                       title: 'Processing Time',
+                       dataIndex: 'processing_time',
+                       key: 'processing_time',
+                       render: (time: number) => time ? `${time}s` : '-',
+                     },
+                     {
+                       title: 'Error Message',
+                       dataIndex: 'error_message',
+                       key: 'error_message',
+                       render: (error: string) => error || '-',
+                     },
+                   ]}
+                   rowKey="filename"
+                   pagination={false}
+                   size="small"
+                   scroll={{ y: 200 }}
+                 />
+               </div>
+             </div>
+           )}
         </div>
       </Modal>
 
@@ -712,6 +912,105 @@ const ProfilePage = () => {
                   <span className="summary-value">{getExperienceLevel(selectedProfile)}</span>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Bulk Upload Results Modal */}
+      <Modal
+        title="Bulk Upload Results"
+        open={showBulkResults}
+        onCancel={() => setShowBulkResults(false)}
+        footer={[
+          <Button key="close" onClick={() => setShowBulkResults(false)}>
+            Close
+          </Button>,
+        ]}
+        width={800}
+        className="bulk-upload-results-modal"
+      >
+        {bulkUploadResults && (
+          <div className="bulk-upload-results">
+            {/* Summary Section */}
+            <div className="results-summary">
+              <Title level={4}>Upload Summary</Title>
+              <Row gutter={16}>
+                <Col span={6}>
+                  <div className="summary-stat">
+                    <div className="stat-number">{bulkUploadResults.summary.total_files}</div>
+                    <div className="stat-label">Total Files</div>
+                  </div>
+                </Col>
+                <Col span={6}>
+                  <div className="summary-stat success">
+                    <div className="stat-number">{bulkUploadResults.summary.successful_uploads}</div>
+                    <div className="stat-label">Successful</div>
+                  </div>
+                </Col>
+                <Col span={6}>
+                  <div className="summary-stat error">
+                    <div className="stat-number">{bulkUploadResults.summary.failed_uploads}</div>
+                    <div className="stat-label">Failed</div>
+                  </div>
+                </Col>
+                <Col span={6}>
+                  <div className="summary-stat">
+                    <div className="stat-number">{bulkUploadResults.summary.success_rate}%</div>
+                    <div className="stat-label">Success Rate</div>
+                  </div>
+                </Col>
+              </Row>
+              <div className="processing-time">
+                Total processing time: {bulkUploadResults.summary.total_processing_time}s
+              </div>
+            </div>
+
+            {/* Detailed Results */}
+            <div className="results-details">
+              <Title level={4}>File Details</Title>
+              <Table
+                dataSource={bulkUploadResults.results}
+                columns={[
+                  {
+                    title: 'Filename',
+                    dataIndex: 'filename',
+                    key: 'filename',
+                    render: (text: string) => <span className="filename">{text}</span>,
+                  },
+                  {
+                    title: 'Status',
+                    dataIndex: 'status',
+                    key: 'status',
+                    render: (status: string) => (
+                      <Tag color={status === 'success' ? 'success' : 'error'}>
+                        {status === 'success' ? '✅ Success' : '❌ Failed'}
+                      </Tag>
+                    ),
+                  },
+                  {
+                    title: 'CV ID',
+                    dataIndex: 'cv_id',
+                    key: 'cv_id',
+                    render: (cvId: number) => cvId || '-',
+                  },
+                  {
+                    title: 'Processing Time',
+                    dataIndex: 'processing_time',
+                    key: 'processing_time',
+                    render: (time: number) => time ? `${time}s` : '-',
+                  },
+                  {
+                    title: 'Error Message',
+                    dataIndex: 'error_message',
+                    key: 'error_message',
+                    render: (error: string) => error || '-',
+                  },
+                ]}
+                rowKey="filename"
+                pagination={false}
+                size="small"
+              />
             </div>
           </div>
         )}
