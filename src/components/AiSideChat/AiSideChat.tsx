@@ -42,15 +42,30 @@ const AiSideChat = ({
   const [sessionId] = useState(() => {
     if (chatId) {
       return isProfileChat 
-        ? `profile-chat-${chatId}-${Math.random().toString(36).substr(2, 9)}`
-        : `profile-chat-${chatId}-${Math.random().toString(36).substr(2, 9)}`;
+        ? `profile-chat-${chatId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        : `chat-${chatId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
     return 'ai-sidebar-session';
   });
   const shouldLoadHistory = !!chatId; // Only load history if we have a specific chatId
 
-  // Load chat history if we have a chatId (for both regular and profile chats)
-  const [initialMessages] = useChatHistory(chatId || '', !shouldLoadHistory, isProfileChat);
+  // CONDITIONAL HOOK USAGE TO PREVENT DUPLICATE API CALLS
+  // For profile chats: only use useProfileChat (skip useChatHistory)
+  // For regular chats: only use useChatHistory (skip useProfileChat)
+  const [initialMessages] = useChatHistory(
+    chatId || '', 
+    !shouldLoadHistory || isProfileChat, // Disable useChatHistory for profile chats
+    isProfileChat
+  );
+
+  // Log the hook usage to verify the fix
+  useEffect(() => {
+    if (chatId) {
+      console.log(`[AiSideChat] Chat type: ${isProfileChat ? 'PROFILE' : 'REGULAR'}, chatId: ${chatId}`);
+      console.log(`[AiSideChat] useChatHistory disabled: ${!shouldLoadHistory || isProfileChat}`);
+      console.log(`[AiSideChat] useProfileChat will be called: ${isProfileChat}`);
+    }
+  }, [chatId, isProfileChat, shouldLoadHistory]);
 
   const [contextMessageSent, setContextMessageSent] = useState(false);
   const location = useLocation();
@@ -63,6 +78,11 @@ const AiSideChat = ({
       // Chat ID changed, clear any cached messages
       previousChatIdRef.current = chatId;
       // The useChat hook will automatically clear messages when sessionId changes
+      
+      // Force clear any cached messages by updating the sessionId
+      if (chatId) {
+        console.log(`[AiSideChat] Chat ID changed from ${previousChatIdRef.current} to ${chatId}, clearing cached messages`);
+      }
     }
   }, [chatId]);
 
@@ -76,7 +96,8 @@ const AiSideChat = ({
   
   if (isProfileChat) {
     // For profile chats, use our custom hook with simulated streaming
-    chatHook = useProfileChat(chatId || '');
+    // Pass initialMessages to avoid duplicate API calls
+    chatHook = useProfileChat(chatId || '', initialMessages);
   } else {
     // For regular chats, use the streaming useChat hook
     chatHook = useChat({

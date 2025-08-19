@@ -1,4 +1,4 @@
-import { Breadcrumb, Button, Typography, Card, Avatar, Row, Col, Spin, Tag, message } from 'antd';
+import { Breadcrumb, Button, Typography, Card, Avatar, Row, Col, Spin, Tag, message, Modal } from 'antd';
 import './ProfileDetails.scss';
 import AiSideChat from '../../components/AiSideChat/AiSideChat';
 import { useAuth } from '../../contexts/AuthContext';
@@ -48,6 +48,9 @@ const ProfileDetails = () => {
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [showAllExperience, setShowAllExperience] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [rewriteLoading, setRewriteLoading] = useState(false);
+  const [rewriteResult, setRewriteResult] = useState<any>(null);
+  const [showRewriteModal, setShowRewriteModal] = useState(false);
 
   useEffect(() => {
     if (!cvId) {
@@ -162,7 +165,7 @@ const ProfileDetails = () => {
       
       // Set filename - use CV name if available, otherwise use CV ID
       const filename = cvData?.name 
-        ? `${cvData.name.replace(/[^a-zA-Z0-9]/g, '_')}_CV.pdf`
+        ? `${cvData.name.replace(/[^a-zA-Z0-0]/g, '_')}_CV.pdf`
         : `CV_${cvId}.pdf`;
       
       link.download = filename;
@@ -183,6 +186,79 @@ const ProfileDetails = () => {
       message.error('Failed to export PDF. Please try again.');
     } finally {
       setExportLoading(false);
+    }
+  };
+
+  const handleRewriteCv = async () => {
+    if (!cvId) {
+      message.error('No CV ID available for rewrite');
+      return;
+    }
+
+    if (!jobPrompt) {
+      message.error('No job description available. Please ensure you came from a match page.');
+      return;
+    }
+
+    setRewriteLoading(true);
+
+    try {
+      console.log('[ProfileDetails] Starting CV rewrite for CV ID:', cvId);
+      
+      // Call the CV rewrite API
+      const response = await api.post(`${API_BASE_URL}/api/v1/cv/${cvId}/rewrite`, {
+        job_description: jobPrompt,
+        rewrite_instructions: "Focus on highlighting relevant skills and experience for this specific job"
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to rewrite CV: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      setRewriteResult(result);
+      setShowRewriteModal(true);
+      
+      console.log('[ProfileDetails] CV rewrite completed successfully');
+      message.success('CV rewritten successfully!');
+      
+    } catch (error) {
+      console.error('[ProfileDetails] Error rewriting CV:', error);
+      message.error('Failed to rewrite CV. Please try again.');
+    } finally {
+      setRewriteLoading(false);
+    }
+  };
+
+  const handleDownloadRewrittenCv = async (optimizationId: string) => {
+    if (!optimizationId || !cvId || !rewriteResult) {
+      message.error('No optimization data available for download.');
+      return;
+    }
+
+    try {
+      // Use the new download endpoint that receives the optimized CV data directly
+      const response = await api.post(`${API_BASE_URL}/api/v1/cv/${cvId}/download-optimized`, {
+        optimized_cv: rewriteResult.rewritten_cv
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download optimized CV: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `optimized_cv_${cvId}_${cvData?.name?.replace(' ', '_') || 'profile'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      message.success('Optimized CV downloaded successfully!');
+    } catch (error) {
+      console.error('[ProfileDetails] Error downloading optimized CV:', error);
+      message.error('Failed to download optimized CV. Please try again.');
     }
   };
 
@@ -240,6 +316,17 @@ const ProfileDetails = () => {
           >
             Export profile (PDF)
           </Button>
+          {jobPrompt && (
+            <Button 
+              onClick={handleRewriteCv} 
+              type="primary" 
+              className="rewrite-cv-btn"
+              loading={rewriteLoading}
+              disabled={rewriteLoading}
+            >
+              Rewrite CV for Job
+            </Button>
+          )}
         </div>
       </div>
 
@@ -391,6 +478,256 @@ const ProfileDetails = () => {
           />
         </div>
       </div>
+
+      {/* CV Rewrite Results Modal */}
+      {showRewriteModal && rewriteResult && (
+        <Modal
+          title={
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff', marginBottom: '8px' }}>
+                ✨ CV Optimization Complete
+              </div>
+              <div style={{ fontSize: '14px', color: '#666' }}>
+                Professional CV rewrite for maximum job alignment
+              </div>
+            </div>
+          }
+          open={showRewriteModal}
+          onCancel={() => setShowRewriteModal(false)}
+          footer={[
+            <Button key="close" onClick={() => setShowRewriteModal(false)}>
+              Close
+            </Button>,
+            rewriteResult.rewritten_cv.optimization_id && (
+                <Button
+                    key="download"
+                    type="primary"
+                    icon={<span>📥</span>}
+                    onClick={() => handleDownloadRewrittenCv(rewriteResult.rewritten_cv.optimization_id)}
+                    style={{ marginLeft: '8px' }}
+                >
+                    Download Optimized CV
+                </Button>
+            )
+          ]}
+          width={1200}
+          className="cv-rewrite-modal"
+          styles={{ body: { padding: '24px' } }}
+        >
+          <div className="rewrite-results">
+            {/* Premium Summary Section */}
+            <div className="rewrite-summary">
+                <div style={{ 
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    padding: '24px',
+                    borderRadius: '12px',
+                    color: 'white',
+                    marginBottom: '24px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                        <span style={{ fontSize: '24px', marginRight: '12px' }}>
+                            {rewriteResult.rewritten_cv.ai_enhanced ? '🤖' : '⚡'}
+                        </span>
+                        <Typography.Title level={3} style={{ color: 'white', margin: 0 }}>
+                            {rewriteResult.rewritten_cv.ai_enhanced ? 'AI-Powered CV Enhancement' : 'Smart CV Optimization'}
+                        </Typography.Title>
+                    </div>
+                    <Typography.Paragraph style={{ color: 'white', fontSize: '16px', margin: 0 }}>
+                        {rewriteResult.changes_summary}
+                    </Typography.Paragraph>
+                    {rewriteResult.rewritten_cv.enhancement_note && (
+                        <div style={{ 
+                            marginTop: '16px', 
+                            padding: '12px', 
+                            background: 'rgba(255,255,255,0.2)', 
+                            borderRadius: '8px',
+                            fontSize: '14px'
+                        }}>
+                            📝 {rewriteResult.rewritten_cv.enhancement_note}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* CV Comparison - Focus on Experience Only */}
+            <div className="cv-comparison" style={{ marginBottom: '32px' }}>
+                <Typography.Title level={4} style={{ 
+                    textAlign: 'center', 
+                    marginBottom: '24px',
+                    color: '#1890ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <span style={{ marginRight: '8px' }}>📊</span>
+                    Experience Optimization Comparison
+                </Typography.Title>
+                <Row gutter={[24, 24]}>
+                    <Col span={12}>
+                        <Card 
+                            title={
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <span style={{ marginRight: '8px' }}>📋</span>
+                                    Original Experience
+                                </div>
+                            } 
+                            size="small"
+                            style={{ border: '2px solid #f0f0f0' }}
+                        >
+                            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                {rewriteResult.original_cv.experience && rewriteResult.original_cv.experience.length > 0 ? (
+                                    rewriteResult.original_cv.experience.map((exp: any, index: number) => (
+                                        <div key={index} style={{ 
+                                            padding: '12px', 
+                                            border: '1px solid #e8e8e8', 
+                                            borderRadius: '6px', 
+                                            marginBottom: '12px',
+                                            background: '#fafafa'
+                                        }}>
+                                            <div style={{ fontWeight: 'bold', color: '#1890ff', marginBottom: '4px' }}>
+                                                {exp.role || 'Role not specified'}
+                                            </div>
+                                            <div style={{ color: '#666', fontSize: '12px', marginBottom: '8px' }}>
+                                                {exp.company || 'Company not specified'}
+                                            </div>
+                                            <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
+                                                {exp.description || 'No description available'}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                                        No experience data available
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+                    </Col>
+                    <Col span={12}>
+                        <Card 
+                            title={
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <span style={{ marginRight: '8px' }}>
+                                        {rewriteResult.rewritten_cv.ai_enhanced ? '🚀' : '⚡'}
+                                    </span>
+                                    {rewriteResult.rewritten_cv.ai_enhanced ? 'AI-Enhanced Experience' : 'Optimized Experience'}
+                                </div>
+                            } 
+                            size="small"
+                            style={{ 
+                                border: rewriteResult.rewritten_cv.ai_enhanced ? '2px solid #52c41a' : '2px solid #faad14',
+                                background: rewriteResult.rewritten_cv.ai_enhanced ? '#f6ffed' : '#fffbe6'
+                            }}
+                        >
+                            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                {rewriteResult.rewritten_cv.experience && rewriteResult.rewritten_cv.experience.length > 0 ? (
+                                    rewriteResult.rewritten_cv.experience.map((exp: any, index: number) => (
+                                        <div key={index} style={{ 
+                                            padding: '12px', 
+                                            border: '1px solid #d9f7be', 
+                                            borderRadius: '6px', 
+                                            marginBottom: '12px',
+                                            background: '#f6ffed',
+                                            position: 'relative'
+                                        }}>
+                                            {index === 0 && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: '-8px',
+                                                    right: '8px',
+                                                    background: '#52c41a',
+                                                    color: 'white',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '10px',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    TOP PRIORITY
+                                                </div>
+                                            )}
+                                            <div style={{ fontWeight: 'bold', color: '#52c41a', marginBottom: '4px' }}>
+                                                {exp.role || 'Role not specified'}
+                                            </div>
+                                            <div style={{ color: '#666', fontSize: '12px', marginBottom: '8px' }}>
+                                                {exp.company || 'Company not specified'}
+                                            </div>
+                                            <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
+                                                {exp.description || 'No description available'}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                                        No experience data available
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+                    </Col>
+                </Row>
+            </div>
+
+            {/* Key Benefits Section */}
+            <div style={{ 
+                marginTop: '32px', 
+                padding: '24px', 
+                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                borderRadius: '12px',
+                color: 'white'
+            }}>
+                <Typography.Title level={4} style={{ color: 'white', textAlign: 'center', marginBottom: '20px' }}>
+                    🎯 Key Benefits of This Optimization
+                </Typography.Title>
+                <Row gutter={[16, 16]}>
+                    <Col span={8}>
+                        <div style={{ textAlign: 'center', padding: '16px' }}>
+                            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📈</div>
+                            <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Increased Relevance</div>
+                            <div style={{ fontSize: '14px', opacity: 0.9 }}>
+                                Skills and experience prioritized by job requirements
+                            </div>
+                        </div>
+                    </Col>
+                    <Col span={8}>
+                        <div style={{ textAlign: 'center', padding: '16px' }}>
+                            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎨</div>
+                            <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Enhanced Descriptions</div>
+                            <div style={{ fontSize: '14px', opacity: 0.9 }}>
+                                More impactful and professional language
+                            </div>
+                        </div>
+                    </Col>
+                    <Col span={8}>
+                        <div style={{ textAlign: 'center', padding: '16px' }}>
+                            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🚀</div>
+                            <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Better Positioning</div>
+                            <div style={{ fontSize: '14px', opacity: 0.9 }}>
+                                Strategic organization for maximum impact
+                            </div>
+                        </div>
+                    </Col>
+                </Row>
+                {rewriteResult.rewritten_cv.ai_enhanced && (
+                    <div style={{ 
+                        marginTop: '20px', 
+                        textAlign: 'center', 
+                        padding: '16px', 
+                        background: 'rgba(255,255,255,0.2)', 
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.3)'
+                    }}>
+                        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
+                            🤖 AI-Powered Enhancement
+                        </div>
+                        <div style={{ fontSize: '14px', opacity: 0.9 }}>
+                            This CV was intelligently optimized using advanced AI algorithms to maximize your chances of getting hired for this specific role.
+                        </div>
+                    </div>
+                )}
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };
