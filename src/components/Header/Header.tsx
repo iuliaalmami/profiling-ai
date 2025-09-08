@@ -1,5 +1,6 @@
 import {
   LogoutOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { Avatar, Typography, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
@@ -12,7 +13,7 @@ import './Header.scss';
 const { Text } = Typography;
 
 const Header = () => {
-  const { logout, user } = useAuth();
+  const { logout, user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -31,6 +32,12 @@ const Header = () => {
       ),
       disabled: true,
     },
+    ...(isAdmin ? [{
+      key: 'admin',
+      label: 'Admin Panel',
+      icon: <SettingOutlined />,
+      onClick: () => navigate('/admin'),
+    }] : []),
     {
       key: 'logout',
       label: 'Logout',

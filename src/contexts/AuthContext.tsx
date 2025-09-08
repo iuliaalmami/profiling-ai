@@ -15,7 +15,8 @@ const decodeJWT = (token: string): User | null => {
     return {
       id: payload.id,
       email: payload.email,
-      name: payload.name || payload.email?.split('@')[0] || 'User'
+      name: payload.name || payload.email?.split('@')[0] || 'User',
+      isAdmin: payload.is_admin || false
     };
   } catch (error) {
     console.error('Error decoding JWT token:', error);
@@ -27,12 +28,14 @@ interface User {
   id?: number;
   email?: string;
   name?: string;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
   token: string | null;
   user: User | null;
+  isAdmin: boolean;
   isLoading: boolean;
   login: (token: string) => void;
   logout: () => void;
@@ -48,6 +51,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -57,20 +61,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const userData = decodeJWT(savedToken);
       setToken(savedToken);
       setUser(userData);
+      setIsAdmin(userData?.isAdmin || false);
       setIsAuthenticated(true);
     } else {
       // Token is invalid or expired, clear state
       setToken(null);
       setUser(null);
+      setIsAdmin(false);
       setIsAuthenticated(false);
     }
     setIsLoading(false); // Done checking
 
     // Listen for token expiration events from API calls
     const handleTokenExpired = () => {
-      console.log('[AuthContext] Token expired event received, logging out...');
       setToken(null);
       setUser(null);
+      setIsAdmin(false);
       setIsAuthenticated(false);
     };
 
@@ -87,6 +93,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.setItem('auth_token', newToken);
     setToken(newToken);
     setUser(userData);
+    setIsAdmin(userData?.isAdmin || false);
     setIsAuthenticated(true);
   };
 
@@ -96,11 +103,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     sessionStorage.clear(); // Clear any session data like chatId
     setToken(null);
     setUser(null);
+    setIsAdmin(false);
     setIsAuthenticated(false);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, token, user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, token, user, isAdmin, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

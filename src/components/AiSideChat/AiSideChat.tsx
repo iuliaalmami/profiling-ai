@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, memo, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { RightOutlined, RobotOutlined, SendOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Input, Typography, Spin } from 'antd';
@@ -25,6 +25,7 @@ interface AiSideChatProps {
   };
 }
 
+
 const AiSideChat = ({
   chatId,
   candidateName,
@@ -36,6 +37,7 @@ const AiSideChat = ({
   const { token } = useAuth();
   const inputRef = useRef(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
 
   // Use chatId if provided, otherwise fallback to generic session
   // Make sessionId unique by adding a component mount identifier to prevent caching issues when chats are deleted/recreated
@@ -60,11 +62,7 @@ const AiSideChat = ({
 
   // Log the hook usage to verify the fix
   useEffect(() => {
-    if (chatId) {
-      console.log(`[AiSideChat] Chat type: ${isProfileChat ? 'PROFILE' : 'REGULAR'}, chatId: ${chatId}`);
-      console.log(`[AiSideChat] useChatHistory disabled: ${!shouldLoadHistory || isProfileChat}`);
-      console.log(`[AiSideChat] useProfileChat will be called: ${isProfileChat}`);
-    }
+    // Chat initialization logic
   }, [chatId, isProfileChat, shouldLoadHistory]);
 
   const [contextMessageSent, setContextMessageSent] = useState(false);
@@ -80,9 +78,6 @@ const AiSideChat = ({
       // The useChat hook will automatically clear messages when sessionId changes
       
       // Force clear any cached messages by updating the sessionId
-      if (chatId) {
-        console.log(`[AiSideChat] Chat ID changed from ${previousChatIdRef.current} to ${chatId}, clearing cached messages`);
-      }
     }
   }, [chatId]);
 
@@ -108,10 +103,8 @@ const AiSideChat = ({
       },
       initialMessages: initialMessages as Message[],
       onError: (error) => {
-        console.error('[AiSideChat] Error during streaming:', error);
         // Check if it's a 401 error from the response
         if (error.message && error.message.includes('401')) {
-          console.log('[AiSideChat] Token expired during streaming, handling...');
           handleTokenExpiration();
         }
       },
@@ -134,6 +127,12 @@ const AiSideChat = ({
   // Destructure the appropriate values - both hooks are now useChat
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = chatHook;
 
+  // Limit messages to prevent performance issues with very long chats
+  const displayMessages = useMemo(() => {
+    return messages.slice(-30); // Only show last 30 messages
+  }, [messages]);
+
+
   // Create a unified sendMessage function that works with both hooks
   const sendMessage = useCallback((content: string) => {
     if (isProfileChat) {
@@ -149,7 +148,7 @@ const AiSideChat = ({
   // Auto-scroll to bottom when messages change or loading state changes
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [displayMessages, isLoading]);
 
   // Auto-send context message when component loads with candidate name
   useEffect(() => {
@@ -317,7 +316,7 @@ const AiSideChat = ({
                     )}
                   </div>
                 </div>
-                {messages.map((msg, idx) => {
+                {displayMessages.map((msg, idx) => {
                   const bubbleClass = `chat-bubble ${msg.role}`;
 
                   return (
@@ -380,7 +379,7 @@ const AiSideChat = ({
       ) : (
         <Sider
           className="matches-right"
-          width={300}
+          width={600}
           theme="light"
         >
           <div className="ai-assistant-wrapper">
@@ -463,7 +462,7 @@ const AiSideChat = ({
                     )}
                   </div>
                 </div>
-                {messages.map((msg, idx) => {
+                {displayMessages.map((msg, idx) => {
                   const bubbleClass = `chat-bubble ${msg.role}`;
 
                   return (
@@ -528,4 +527,5 @@ const AiSideChat = ({
   );
 };
 
-export default AiSideChat;
+// Wrap the entire component in memo to prevent unnecessary re-renders
+export default memo(AiSideChat);

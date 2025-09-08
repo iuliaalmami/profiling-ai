@@ -13,9 +13,13 @@ body {
   display: flex;
   gap: 20px;
   flex-direction: column;
+  min-height: 100vh; // Use min-height instead of fixed height
+  overflow: visible; // Allow scrolling when needed
 }
 .page-wrapper {
   display: flex;
   gap: 20px;
-  min-height: 100vh;
+  flex: 1; // Take remaining space after header
+  min-height: 0; // Allow flex to work properly
+  overflow: visible; // Allow scrolling when needed
 }

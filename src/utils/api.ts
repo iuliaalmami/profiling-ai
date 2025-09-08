@@ -26,7 +26,6 @@ export const apiRequest = async (url: string, options: ApiOptions = {}): Promise
   
   // Check if auth is required but no token available
   if (requireAuth && !token) {
-    console.warn('[API] No auth token available for protected endpoint');
     redirectToLogin();
     throw new TokenExpiredError();
   }
@@ -46,19 +45,23 @@ export const apiRequest = async (url: string, options: ApiOptions = {}): Promise
     headers['Authorization'] = `Bearer ${token}`;
   }
   
+  // Construct full URL
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}/api/v1${url}`;
+  
   // Make the request
   try {
-    const response = await fetch(url, {
+    const response = await fetch(fullUrl, {
       ...fetchOptions,
       headers,
     });
     
-    // Check for token expiration (401 Unauthorized)
+    // Check for token expiration (401 Unauthorized) - but only for authenticated requests
     if (response.status === 401 && requireAuth) {
-      console.warn('[API] Token expired or invalid (401). Redirecting to login...');
       handleTokenExpiration();
       throw new TokenExpiredError();
     }
+    
+    // For public requests (like login), don't throw on 401/403 - let the caller handle it
     
     return response;
   } catch (error) {
@@ -67,7 +70,6 @@ export const apiRequest = async (url: string, options: ApiOptions = {}): Promise
       throw error;
     }
     
-    console.error('[API] Request failed:', error);
     throw error;
   }
 };
@@ -115,8 +117,6 @@ export const api = {
  * Handle token expiration - clear stored data and redirect to login
  */
 export const handleTokenExpiration = () => {
-  console.log('[Auth] Handling token expiration...');
-  
   // Clear all authentication-related data
   localStorage.removeItem('auth_token');
   sessionStorage.clear(); // Clear any session data like chatId
@@ -181,7 +181,6 @@ export const validateStoredToken = (): boolean => {
   }
   
   if (isTokenExpired(token)) {
-    console.log('[Auth] Stored token is expired, clearing...');
     handleTokenExpiration();
     return false;
   }

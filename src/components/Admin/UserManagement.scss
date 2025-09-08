@@ -1,0 +1,13 @@
+@use '../../styles/variables.scss' as var;
+
+.user-management {
+  .inactive-user-row {
+    background-color: var.$light-grey-4;
+    opacity: 0.7;
+    
+    &:hover {
+      background-color: var.$light-grey-3 !important;
+      opacity: 0.8;
+    }
+  }
+}

@@ -29,7 +29,8 @@
       color: var.$blue;
       
       .dashboard-icon,
-      .profiles-icon {
+      .profiles-icon,
+      .admin-icon {
         color: var.$blue;
       }
     }
@@ -40,13 +41,15 @@
       font-weight: 500;
       
       .dashboard-icon,
-      .profiles-icon {
+      .profiles-icon,
+      .admin-icon {
         color: var.$blue;
       }
     }
 
     .dashboard-icon,
-    .profiles-icon {
+    .profiles-icon,
+    .admin-icon {
       color: var.$light-black-2;
       transition: color 0.2s ease;
     }

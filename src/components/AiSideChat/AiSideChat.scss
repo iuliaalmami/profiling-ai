@@ -176,13 +176,23 @@
 
 // EXISTING STYLES FOR MATCHES PAGE - DO NOT MODIFY
 .matches-right {
-  height: 100%;
+  height: 100vh; // Use full viewport height like profile page
   display: flex;
   flex-direction: column;
   background: vars.$light-grey;
   border-left: 1px solid vars.$light-grey;
-  min-width: 500px !important; // Ensure minimum width for better text display
-  width: 500px !important; // Set fixed width to prevent text cutting
+  min-width: 600px !important; // Increased from 500px (20% wider)
+  width: 600px !important; // Increased from 500px (20% wider)
+  
+  // Override Ant Design Sider default styling
+  .ant-layout-sider-children {
+    background: vars.$light-grey !important;
+  }
+  
+  // Override any other Ant Design Sider styling
+  &.ant-layout-sider {
+    background: vars.$light-grey !important;
+  }
 }
 
 // Essential styles for the ai-assistant-wrapper (used in both matches and profile chats)
@@ -231,7 +241,7 @@
       overflow-x: hidden; // Prevent horizontal scrolling
       padding-bottom: 0;
       min-height: 0;
-      max-height: calc(100vh - 200px); // Restore original height constraint for matches page
+      max-height: none; // Remove height constraint for standard height like profile page
       display: flex;
       flex-direction: column;
       width: 100%; // Ensure full width usage
@@ -544,6 +554,17 @@
 
 .ai-chat-clickable {
   cursor: pointer;
+}
+
+// Global override for Ant Design Sider styling to match app design
+.ant-layout-sider {
+  &.matches-right {
+    background: vars.$light-grey !important;
+    
+    .ant-layout-sider-children {
+      background: vars.$light-grey !important;
+    }
+  }
 }
 
 

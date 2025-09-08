@@ -26,7 +26,6 @@ export const useProfileChat = (chatId: string, initialMessagesFromProps: Message
     // Generate new session key to force useChat to start fresh
     setSessionKey(`${chatId}-${Date.now()}`);
     
-    console.log(`[useProfileChat] Loading chat history for chatId ${chatId}`);
 
     const loadChatHistory = async () => {
       try {
@@ -47,7 +46,6 @@ export const useProfileChat = (chatId: string, initialMessagesFromProps: Message
           }));
           
           setInitialMessages(normalizedHistory);
-          console.log(`[useProfileChat] Successfully loaded ${normalizedHistory.length} messages for chatId ${chatId}`);
         }
       } catch (error) {
         console.error('Error loading profile chat history:', error);
@@ -66,10 +64,8 @@ export const useProfileChat = (chatId: string, initialMessagesFromProps: Message
     },
     initialMessages: initialMessages,
     onError: (error) => {
-      console.error('[useProfileChat] Error during streaming:', error);
       // Check if it's a 401 error from the response
       if (error.message && error.message.includes('401')) {
-        console.log('[useProfileChat] Token expired during streaming, handling...');
         handleTokenExpiration();
       }
     },

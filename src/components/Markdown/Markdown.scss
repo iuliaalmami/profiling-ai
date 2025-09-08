@@ -1,4 +1,5 @@
 @use '../../styles/variables.scss' as vars;
+@use 'sass:color';
 
 .markdown-renderer {
   padding: 12px;
@@ -8,6 +9,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  
   p {
     &:nth-child(2) {
       font-weight: 700;
@@ -16,5 +18,215 @@
       margin-left: 8px;
       background-color: vars.$white;
     }
+  }
+
+  // Table wrapper for responsive scrolling
+  .table-wrapper {
+    overflow-x: auto;
+    margin: 16px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    
+    // Custom scrollbar styling
+    &::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: vars.$primary-color;
+      border-radius: 4px;
+      
+      &:hover {
+        background: color.adjust(vars.$primary-color, $lightness: -10%);
+      }
+    }
+  }
+
+  // Table styling for proper formatting
+  table {
+    width: 100%;
+    min-width: 700px; // Increased minimum width for better readability
+    border-collapse: collapse;
+    background-color: vars.$white;
+    font-size: 14px;
+    line-height: 1.5;
+    display: table;
+    table-layout: auto; // Allow columns to size based on content
+  }
+
+  thead {
+    background-color: vars.$primary-color;
+    color: vars.$white;
+    
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid vars.$primary-color;
+      white-space: nowrap;
+      
+      &:first-child {
+        border-top-left-radius: 8px;
+      }
+      
+      &:last-child {
+        border-top-right-radius: 8px;
+      }
+    }
+  }
+
+  // Custom header cell styling
+  .table-header {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    background-color: vars.$primary-color;
+    color: vars.$white;
+    border-bottom: 2px solid vars.$primary-color;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e8e8e8;
+      transition: background-color 0.2s ease;
+      
+      &:hover {
+        background-color: #f5f5f5;
+      }
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+    
+    td {
+      padding: 12px 16px;
+      vertical-align: top;
+      word-wrap: break-word;
+      word-break: break-word;
+      
+      // Remove max-width constraint to prevent name truncation
+      // max-width: 200px; // Removed this line
+      
+      // Allow text wrapping for better readability
+      white-space: normal;
+      
+      // Special styling for name columns (first column typically)
+      &:first-child {
+        min-width: 150px; // Ensure names have enough space
+        max-width: none; // Allow names to take full width needed
+        font-weight: 500; // Slightly bold names for better readability
+      }
+      
+      // Style for skill lists and other comma-separated content
+      &:contains(',') {
+        line-height: 1.6;
+      }
+    }
+  }
+
+  // Custom table cell styling
+  .table-cell {
+    padding: 12px 16px;
+    vertical-align: top;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.5;
+    
+    // Remove max-width constraint for custom cells too
+    // max-width: 200px; // Removed this line
+    
+    // Special styling for name cells
+    &.name-cell {
+      min-width: 150px;
+      max-width: none;
+      font-weight: 500;
+    }
+    
+    // Better handling of long skill lists
+    &:contains(',') {
+      line-height: 1.6;
+    }
+    
+    // Style for different content types
+    &:contains('•') {
+      padding-left: 20px;
+    }
+  }
+
+  // Responsive design for smaller screens
+  @media (max-width: 767px) {
+    table {
+      font-size: 12px;
+      min-width: 500px; // Reduced minimum width for mobile
+      
+      th, td {
+        padding: 8px 12px;
+        
+        // Remove max-width constraint on mobile too
+        // max-width: 150px; // Removed this line
+        
+        // Ensure name column still has enough space on mobile
+        &:first-child {
+          min-width: 120px;
+          max-width: none;
+        }
+      }
+    }
+  }
+
+  // Code blocks styling
+  pre {
+    background-color: #f6f8fa;
+    border-radius: 6px;
+    padding: 16px;
+    overflow-x: auto;
+    border: 1px solid #e1e4e8;
+    
+    code {
+      background: none;
+      padding: 0;
+      font-size: 14px;
+      color: #24292e;
+    }
+  }
+
+  code {
+    background-color: #f6f8fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: #24292e;
+    border: 1px solid #e1e4e8;
+  }
+
+  // List styling
+  ul, ol {
+    padding-left: 20px;
+    margin: 8px 0;
+    
+    li {
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+  }
+
+  // Blockquote styling
+  blockquote {
+    border-left: 4px solid vars.$primary-color;
+    padding-left: 16px;
+    margin: 16px 0;
+    color: #666;
+    font-style: italic;
   }
 }

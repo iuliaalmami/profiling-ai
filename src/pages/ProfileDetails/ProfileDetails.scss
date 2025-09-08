@@ -69,12 +69,12 @@
   overflow-x: hidden; // Prevent horizontal scrolling
   padding-right: 12px;
   min-width: 0; // Allow flex item to shrink below content size
-  max-width: calc(100% - 500px); // Give more space to the chat (was 424px)
+  max-width: calc(100% - 600px); // Give more space to the chat (increased from 500px)
 }
 
 .profile-details-content-right {
-  width: 500px; // Increased from 400px to give chat more space
-  min-width: 500px; // Prevent shrinking
+  width: 600px; // Increased from 500px (20% wider)
+  min-width: 600px; // Prevent shrinking
   flex-shrink: 0;
   height: 100%;
   display: flex;

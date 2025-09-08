@@ -57,10 +57,8 @@ const AIChat = ({ chatId: initialChatId = '', preFilledJobDescription }: AIChatP
       }
     },
     onError: (error) => {
-      console.error('[AiChat] Error during streaming:', error);
       // Check if it's a 401 error from the response
       if (error.message && error.message.includes('401')) {
-        console.log('[AiChat] Token expired during streaming, handling...');
         handleTokenExpiration();
       }
     },
@@ -137,7 +135,15 @@ const AIChat = ({ chatId: initialChatId = '', preFilledJobDescription }: AIChatP
       if (data.status === 'completed') {
         setIsProcessingMatch(false);
         setMatchCompleted(true);
-        // Match completed - no need to store prompt since we navigate with chatId
+        // Automatically navigate to matches page when completed
+        setTimeout(() => {
+          if (currentChatId) {
+            navigate(`/matches/${currentChatId}`);
+            // Reset states after navigation
+            setMatchCompleted(false);
+            setMatchProcessingStarted(false);
+          }
+        }, 1000); // Small delay to show completion state briefly
       } else if (data.status === 'error' || data.status === 'failed') {
         setIsProcessingMatch(false);
         setMatchProcessingStarted(false);
@@ -204,16 +210,16 @@ const AIChat = ({ chatId: initialChatId = '', preFilledJobDescription }: AIChatP
     }
   };
 
-  const handleShowMatches = () => {
-    if (chatId) {
-      navigate(`/matches/${chatId}`);
-    } else {
-      console.error('No chat ID available for matches navigation');
-    }
-    // Reset states after navigation
-    setMatchCompleted(false);
-    setMatchProcessingStarted(false);
-  };
+  // const handleShowMatches = () => {
+  //   if (chatId) {
+  //     navigate(`/matches/${chatId}`);
+  //   } else {
+  //     console.error('No chat ID available for matches navigation');
+  //   }
+  //   // Reset states after navigation
+  //   setMatchCompleted(false);
+  //   setMatchProcessingStarted(false);
+  // };
 
   return (
     <div className="ai-chat-container">
@@ -266,17 +272,19 @@ const AIChat = ({ chatId: initialChatId = '', preFilledJobDescription }: AIChatP
               <div key={idx} className={bubbleClass}>
                 {msg.role === 'assistant' ? (
                   <>
+                    <RobotOutlined className="chat-icon" />
                     <div className="assistant-message-content">
-                      <RobotOutlined className="chat-icon" />
-                      {response && <Markdown>{response}</Markdown>}
+                      <div className="message-text">
+                        {response && <Markdown>{response}</Markdown>}
+                      </div>
                     </div>
 
                     {prompt && (
                       <div className="search-matches-wrapper">
                         <p>
-                          If you’d like to add more details, feel free to do so now.
+                          If you'd like to add more details, feel free to do so now.
                           <br />
-                          Otherwise, click “Search Matches” to begin.
+                          Otherwise, click "Search Matches" to begin.
                           <br />
                           <em>
                             Note: Once the search starts, the job description can no longer be
@@ -291,8 +299,10 @@ const AIChat = ({ chatId: initialChatId = '', preFilledJobDescription }: AIChatP
                   </>
                 ) : (
                   <>
-                    <UserOutlined className="chat-icon" />
-                    <span>{msg.content}</span>
+                    <div className="user-message-content">
+                      <div className="message-text">{msg.content}</div>
+                      <UserOutlined className="chat-icon" />
+                    </div>
                   </>
                 )}
               </div>
@@ -325,18 +335,14 @@ const AIChat = ({ chatId: initialChatId = '', preFilledJobDescription }: AIChatP
               <div className="loader-text">
                 <h4>Matches found!</h4>
                 <p>
-                  Your search has been completed successfully. Click below to view the matching
-                  candidates.
+                  Your search has been completed successfully. Redirecting to view the matching
+                  candidates...
                 </p>
               </div>
-              <Button
-                type="primary"
-                size="large"
-                onClick={handleShowMatches}
-                className="ai-chat-scrollable"
-              >
-                Show Matches
-              </Button>
+              <div className="redirecting-spinner">
+                <Spin size="small" />
+                <span>Redirecting...</span>
+              </div>
             </div>
           </div>
         )}

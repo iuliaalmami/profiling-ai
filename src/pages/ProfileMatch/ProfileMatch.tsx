@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, memo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb, Alert, Input, message } from 'antd';
 import { SearchOutlined, CopyOutlined } from '@ant-design/icons';
@@ -253,18 +253,26 @@ const ProfileMatch = () => {
     setSearchTerm(e.target.value);
   };
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: (text: string) => (
+      render: (text: string, record: MatchData) => (
         <a
           href="#"
           className="profile-match__link"
           onClick={e => {
             e.preventDefault();
-            // TODO: Navigate to profile details page
+            navigate(`/profile/${record.cv_id}`, {
+              state: {
+                score: record.score,
+                jobTitle: jobPrompt,
+                chatId: chatId,
+                matchId: record.match_id,
+                matchSummary: record.summary, // Pass the summary directly
+              },
+            });
           }}
         >
           {text}
@@ -341,14 +349,14 @@ const ProfileMatch = () => {
         </Button>
       ),
     },
-  ];
+  ], [jobPrompt, chatId, navigate]);
 
   // Show access denied message if user doesn't own this match
   if (accessDenied) {
     return (
-      <Layout className="matches-layout">
-        <Content className="matches-left">
-          <div className="matches-page-header">
+      <Layout className="profile-match-layout">
+        <Content className="profile-match-content">
+          <div className="profile-match-header">
             <Breadcrumb items={[{ title: 'Home' }, { title: 'New Talent Search' }]} />
             
             <div className="profile-match__results-section">
@@ -376,14 +384,14 @@ const ProfileMatch = () => {
   }
 
   return (
-    <Layout className="matches-layout">
-      <Content className="matches-left">
-        <div className="matches-page-header">
+    <Layout className="profile-match-layout">
+      <Content className="profile-match-content">
+        <div className="profile-match-header">
           <Breadcrumb items={[{ title: 'Home' }, { title: 'New Talent Search' }]} />
 
           <Row justify="space-between" align="middle" className="profile-match__header-row">
             <Col>
-              <Title level={2} className="profile-match__header-title">
+              <Title level={4} className="profile-match__header-title">
                 {jobPrompt || 'Job Search Results'}
               </Title>
             </Col>
@@ -391,8 +399,9 @@ const ProfileMatch = () => {
               <Space>
                 {jobPrompt && (
                   <Button 
-                    type="default" 
+                    type="primary" 
                     icon={<CopyOutlined />}
+                    className="new-match-same-jd-btn"
                     onClick={() => {
                       // Show success message
                       message.success('Job description copied! Starting new search...');
@@ -409,10 +418,14 @@ const ProfileMatch = () => {
                     New Match with Same JD
                   </Button>
                 )}
-                <Button type="default" onClick={() => {
-                  sessionStorage.removeItem('chatId');
-                  navigate('/chat/new');
-                }}>
+                <Button 
+                  type="default" 
+                  className="new-search-btn"
+                  onClick={() => {
+                    sessionStorage.removeItem('chatId');
+                    navigate('/chat/new');
+                  }}
+                >
                   New Search
                 </Button>
               </Space>
@@ -426,64 +439,70 @@ const ProfileMatch = () => {
           )}
         </div>
 
-        <div className="profile-matches-section">
-          <Title level={4} className="profile-match__job-description-title">
-            Profile Matches
-          </Title>
+        <div className="profile-match-main">
+          {/* Matches Section */}
+          <div className="matches-section">
+            <Title level={3}>Profile Matches</Title>
+            
+            {/* Search Section */}
+            <Row justify="space-between" align="middle" className="profile-match__search-section">
+              <Col>
+                <Input.Search
+                  placeholder="Search by name, skills, role, company, or summary..."
+                  allowClear
+                  enterButton={<SearchOutlined />}
+                  size="middle"
+                  onSearch={handleSearch}
+                  onChange={handleSearchChange}
+                  value={searchTerm}
+                />
+                <div style={{ marginTop: 8 }}>
+                  <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                    Try searching for: "banking", "React", "senior developer", "Google", etc.
+                  </Typography.Text>
+                </div>
+              </Col>
+              <Col>
+                {searchTerm && (
+                  <Typography.Text type="secondary">
+                    Showing {filteredMatches.length} of {matches.length} matches
+                    {searchTerm && ` for "${searchTerm}"`}
+                  </Typography.Text>
+                )}
+              </Col>
+            </Row>
+            
+            <Table
+              dataSource={filteredMatches}
+              columns={columns}
+              rowKey="cv_id"
+              rowSelection={rowSelection}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: false, // Remove the dropdown
+                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+                showQuickJumper: true,
+              }}
+              rowClassName={() => 'custom-row-spacing'}
+              loading={loading}
+              locale={{
+                emptyText: loading 
+                  ? 'Loading matches...' 
+                  : searchTerm 
+                    ? `No matches found for "${searchTerm}"` 
+                    : 'No matches found',
+              }}
+            />
+          </div>
           
-          {/* Search Section */}
-          <Row justify="space-between" align="middle" className="profile-match__search-section">
-            <Col>
-              <Input.Search
-                placeholder="Search by name, skills, role, company, or summary..."
-                allowClear
-                enterButton={<SearchOutlined />}
-                size="middle"
-                onSearch={handleSearch}
-                onChange={handleSearchChange}
-                value={searchTerm}
-              />
-              <div style={{ marginTop: 8 }}>
-                <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                  Try searching for: "banking", "React", "senior developer", "Google", etc.
-                </Typography.Text>
-              </div>
-            </Col>
-            <Col>
-              {searchTerm && (
-                <Typography.Text type="secondary">
-                  Showing {filteredMatches.length} of {matches.length} matches
-                  {searchTerm && ` for "${searchTerm}"`}
-                </Typography.Text>
-              )}
-            </Col>
-          </Row>
-          
-          <Table
-            dataSource={filteredMatches}
-            columns={columns}
-            rowKey="cv_id"
-            rowSelection={rowSelection}
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
-            }}
-            rowClassName={() => 'custom-row-spacing'}
-            loading={loading}
-            locale={{
-              emptyText: loading 
-                ? 'Loading matches...' 
-                : searchTerm 
-                  ? `No matches found for "${searchTerm}"` 
-                  : 'No matches found',
-            }}
-          />
+          {/* AI Assistant Section */}
+          <div className="ai-assistant-section">
+            <AiSideChat chatId={chatId} autoClearContext={true} />
+          </div>
         </div>
       </Content>
-      <AiSideChat chatId={chatId} autoClearContext={true} />
     </Layout>
   );
 };
 
-export default ProfileMatch;
+export default memo(ProfileMatch);

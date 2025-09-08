@@ -146,7 +146,6 @@ const ProfileDetails = () => {
     setExportLoading(true);
 
     try {
-      console.log('[ProfileDetails] Starting PDF export for CV ID:', cvId);
       
       // Make API request to download PDF
       const response = await api.get(`${API_BASE_URL}/api/v1/download-pdf/${cvId}`);
@@ -178,7 +177,6 @@ const ProfileDetails = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      console.log('[ProfileDetails] PDF export completed successfully');
       message.success('PDF downloaded successfully!');
       
     } catch (error) {
@@ -203,7 +201,6 @@ const ProfileDetails = () => {
     setRewriteLoading(true);
 
     try {
-      console.log('[ProfileDetails] Starting CV rewrite for CV ID:', cvId);
       
       // Call the CV rewrite API
       const response = await api.post(`${API_BASE_URL}/api/v1/cv/${cvId}/rewrite`, {
@@ -219,7 +216,6 @@ const ProfileDetails = () => {
       setRewriteResult(result);
       setShowRewriteModal(true);
       
-      console.log('[ProfileDetails] CV rewrite completed successfully');
       message.success('CV rewritten successfully!');
       
     } catch (error) {

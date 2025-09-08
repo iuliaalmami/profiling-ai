@@ -1,10 +1,12 @@
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import './Sidebar.scss';
-import { DashboardOutlined, TeamOutlined, PlusOutlined } from '@ant-design/icons';
+import { DashboardOutlined, TeamOutlined, PlusOutlined, SettingOutlined } from '@ant-design/icons';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAdmin } = useAuth();
 
   const handleNewMatch = () => {
     sessionStorage.removeItem('chatId');
@@ -24,6 +26,12 @@ const Sidebar = () => {
         <TeamOutlined className="profiles-icon" />
         Profiles
       </NavLink>
+      {isAdmin && (
+        <NavLink to="/admin" className="nav-link">
+          <SettingOutlined className="admin-icon" />
+          Admin
+        </NavLink>
+      )}
       {showNewMatchButton && (
         <button onClick={handleNewMatch} className="nav-link nav-button">
           <PlusOutlined className="new-match-icon" />

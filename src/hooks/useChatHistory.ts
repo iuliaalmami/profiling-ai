@@ -11,7 +11,6 @@ export function useChatHistory(chatId: string, disabled = false, isProfileChat =
   useEffect(() => {
     // SAFETY CHECK: Validate chatId before proceeding
     if (disabled || chatId === '' || !chatId || typeof chatId !== 'string') {
-      console.log(`[useChatHistory] Skipping chat history load - disabled: ${disabled}, chatId: ${chatId}, type: ${typeof chatId}`);
       setInitialMessages([]);
       setIsLoadingHistory(false);
       return;
@@ -36,7 +35,6 @@ export function useChatHistory(chatId: string, disabled = false, isProfileChat =
         if (isProfileChat) {
           // Explicitly marked as profile chat - use profile endpoint
           endpoint = `${API_BASE_URL}/api/v1/profile-chat/${chatId}/messages`;
-          console.log(`[useChatHistory] Using profile chat endpoint for chatId ${chatId} (explicitly marked)`);
         } else {
           // SAFE DETECTION: Check if this chatId is actually a profile chat ID
           // Profile chat IDs are typically numeric and used in profile-related contexts
@@ -47,7 +45,6 @@ export function useChatHistory(chatId: string, disabled = false, isProfileChat =
           // but we'll add error handling to gracefully fall back if needed
           
           endpoint = `${API_BASE_URL}/api/v1/chat/history/${chatId}`;
-          console.log(`[useChatHistory] Using regular chat endpoint for chatId ${chatId} (will fallback to profile if needed)`);
         }
 
         const response = await api.get(endpoint);
@@ -69,11 +66,9 @@ export function useChatHistory(chatId: string, disabled = false, isProfileChat =
           }));
           
           setInitialMessages(normalizedHistory);
-          console.log(`[useChatHistory] Successfully loaded chat history for chatId ${chatId} from ${isProfileChat ? 'profile' : 'regular'} endpoint (${normalizedHistory.length} messages)`);
         } else if (response.status === 404 && !isProfileChat) {
           // SAFE FALLBACK: If regular chat endpoint returns 404, this might be a profile chat ID
           // Try the profile chat endpoint as a fallback
-          console.log(`[useChatHistory] Regular chat endpoint returned 404 for chatId ${chatId}, trying profile chat endpoint as fallback`);
           
           const fallbackResponse = await api.get(`${API_BASE_URL}/api/v1/profile-chat/${chatId}/messages`);
           
@@ -94,7 +89,6 @@ export function useChatHistory(chatId: string, disabled = false, isProfileChat =
             }));
             
             setInitialMessages(normalizedFallbackHistory);
-            console.log(`[useChatHistory] Successfully loaded profile chat history for chatId ${chatId} via fallback (${normalizedFallbackHistory.length} messages)`);
           } else {
             console.warn(`[useChatHistory] Both regular and profile chat endpoints failed for chatId ${chatId}. Status: ${fallbackResponse.status}`);
             setInitialMessages([]);

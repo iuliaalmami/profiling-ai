@@ -11,6 +11,8 @@ import ProfileMatch from './pages/ProfileMatch/ProfileMatch';
 import ProfileDetails from './pages/ProfileDetails/ProfileDetails';
 import LoginPage from './pages/Login/Login';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import AdminRoute from './components/AdminRoute/AdminRoute';
+import AdminDashboard from './pages/Admin/AdminDashboard';
 
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -35,6 +37,11 @@ function App() {
                   <Route path="matches/:chatId" element={<ProfileMatch />} />
                   <Route path="profile-details" element={<ProfileDetails />} />
                   <Route path="profile/:cvId" element={<ProfileDetails />} />
+                  <Route path="admin" element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  } />
                 </Routes>
               </div>
             </div>

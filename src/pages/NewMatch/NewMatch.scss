@@ -5,6 +5,8 @@
   display: flex;
   flex: 1;
   flex-direction: column;
+  height: calc(100vh - 80px); // Match sidebar height (viewport height minus header)
+  overflow: hidden; // Prevent expansion beyond set height
 
   .new-match-header {
     padding: 16px 24px;
@@ -46,8 +48,10 @@
 .new-match-content {
   display: flex;
   background: vars.$white;
-  flex: 1;
+  flex: 0.9;
   flex-direction: column;
+  height: calc(100vh - 80px); // Match sidebar height (viewport height minus header)
+  overflow: hidden; // Prevent expansion beyond set height
 }
 
 .no-matches {
