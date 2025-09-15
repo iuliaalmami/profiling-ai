@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { List, Typography, Button, Space, Tag, Spin, Empty, message } from 'antd';
+import { List, Typography, Button, Space, Tag, Spin, Empty, message, Pagination } from 'antd';
 import { MessageOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, API_BASE_URL } from '../../utils/api';
@@ -21,6 +21,8 @@ const ProfileChats = () => {
   const { } = useAuth();
   const [profileChats, setProfileChats] = useState<ProfileChat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
 
   useEffect(() => {
     fetchProfileChats();
@@ -67,6 +69,11 @@ const ProfileChats = () => {
     }
   };
 
+  const handlePaginationChange = (page: number, size: number) => {
+    setCurrentPage(page);
+    setPageSize(size);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -76,6 +83,11 @@ const ProfileChats = () => {
       minute: '2-digit'
     });
   };
+
+  // Calculate paginated data
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = profileChats.slice(startIndex, endIndex);
 
   if (loading) {
     return (
@@ -113,7 +125,7 @@ const ProfileChats = () => {
       <List
         className="profile-chats-list"
         itemLayout="horizontal"
-        dataSource={profileChats}
+        dataSource={paginatedData}
         renderItem={(chat) => (
           <List.Item
             className="profile-chat-item"
@@ -158,6 +170,27 @@ const ProfileChats = () => {
           </List.Item>
         )}
       />
+      
+      {profileChats.length > pageSize && (
+        <div className="pagination-container" style={{ 
+          marginTop: '20px', 
+          display: 'flex', 
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <Pagination
+            current={currentPage}
+            pageSize={pageSize}
+            total={profileChats.length}
+            showSizeChanger={true}
+            showQuickJumper={true}
+            pageSizeOptions={['5', '10', '20', '50']}
+            showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} chats`}
+            onChange={handlePaginationChange}
+            onShowSizeChange={handlePaginationChange}
+          />
+        </div>
+      )}
     </div>
   );
 };

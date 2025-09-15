@@ -1,7 +1,7 @@
 import './JobDescription.scss';
 import { useState, useEffect } from 'react';
 import JobCard from '../JobCard/JobCard';
-import { Typography, Spin, message, Input } from 'antd';
+import { Typography, Spin, message, Input, Pagination } from 'antd';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, API_BASE_URL } from '../../utils/api';
 
@@ -22,6 +22,8 @@ const JobDescription = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [data, setData] = useState<JobMatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
 
 
@@ -90,6 +92,21 @@ const JobDescription = () => {
     return matchesSearch;
   });
 
+  const handlePaginationChange = (page: number, size: number) => {
+    setCurrentPage(page);
+    setPageSize(size);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Calculate paginated data
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = filteredData.slice(startIndex, endIndex);
+
   return (
     <div className="job-description-wrapper">
       <div className="job-description-content">
@@ -98,7 +115,7 @@ const JobDescription = () => {
           <Input.Search
             placeholder="Search by job title..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             className="search-section__input"
             allowClear
           />
@@ -113,14 +130,37 @@ const JobDescription = () => {
               </Typography.Text>
             </div>
           ) : filteredData.length ? (
-            filteredData.map(job => <JobCard key={job.id} job={{
-              id: job.id,
-              title: job.title,
-              skills: job.skills || [],
-              description: job.description,
-              postedDate: job.postedDate || '',
-              matches: job.matches || 0
-            }} />)
+            <>
+              {paginatedData.map(job => <JobCard key={job.id} job={{
+                id: job.id,
+                title: job.title,
+                skills: job.skills || [],
+                description: job.description,
+                postedDate: job.postedDate || '',
+                matches: job.matches || 0
+              }} />)}
+              
+              {filteredData.length > pageSize && (
+                <div className="pagination-container" style={{ 
+                  marginTop: '20px', 
+                  display: 'flex', 
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}>
+                  <Pagination
+                    current={currentPage}
+                    pageSize={pageSize}
+                    total={filteredData.length}
+                    showSizeChanger={true}
+                    showQuickJumper={true}
+                    pageSizeOptions={['10', '20', '50', '100']}
+                    showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} jobs`}
+                    onChange={handlePaginationChange}
+                    onShowSizeChange={handlePaginationChange}
+                  />
+                </div>
+              )}
+            </>
           ) : (
             <div className="empty-container">
               <Typography.Text>

@@ -7,10 +7,18 @@ import { api, API_BASE_URL } from '../../utils/api';
 import avatar from '../../assets/avatar.png';
 import { useParams, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+interface AvailabilityInfo {
+  status: string; // "available_now", "assigned", "unknown"
+  message: string;
+  available_from?: string;
+  current_project?: string;
+}
+
 interface CVData {
   id: number;
   name: string;
   email?: string;
+  cognizant_id?: string;
   phone?: string;
   linkedin?: string;
   summary?: string;
@@ -21,6 +29,7 @@ interface CVData {
     duration?: string;
   }>;
   last_update?: string;
+  availability?: AvailabilityInfo; // NEW: Employee availability data
 }
 
 
@@ -39,6 +48,7 @@ const ProfileDetails = () => {
     chatId?: string;
     matchId?: string | number;
     matchSummary?: string; // Summary passed directly from matches page
+    availability?: AvailabilityInfo; // NEW: Availability data from matches page
   } | null;
 
   const [cvData, setCvData] = useState<CVData | null>(null);
@@ -62,7 +72,7 @@ const ProfileDetails = () => {
       try {
         // If we have a match_id, use the complete match endpoint (Step 3 of data flow)
         if (matchData?.matchId) {
-          const matchResponse = await api.get(`${API_BASE_URL}/api/v1/match/${matchData.matchId}`);
+          const matchResponse = await api.get(`${API_BASE_URL}/api/v1/match/${matchData.matchId}?include_employee_data=true`);
           
           if (matchResponse.ok) {
             const completeMatchData = await matchResponse.json();
@@ -352,33 +362,119 @@ const ProfileDetails = () => {
 
           {/* Contact Info */}
           <Card className="contact-info-card">
+            <Typography.Title level={5}>Contact Information</Typography.Title>
             <Row gutter={[16, 16]} className="info-grid">
               <Col xs={24} md={8}>
-                <Typography.Text className="label">Email</Typography.Text>
+                <Typography.Text className="label">📧 Email</Typography.Text>
                 <Typography.Paragraph className="value">
-                  {cvData.email || 'Not provided'}
+                  {cvData.email ? (
+                    <Typography.Text copyable style={{ color: '#1890ff', fontWeight: '500' }}>
+                      {cvData.email}
+                    </Typography.Text>
+                  ) : (
+                    <Typography.Text type="secondary">Not provided</Typography.Text>
+                  )}
                 </Typography.Paragraph>
               </Col>
               <Col xs={24} md={8}>
-                <Typography.Text className="label">Phone</Typography.Text>
+                <Typography.Text className="label">🆔 Cognizant ID</Typography.Text>
                 <Typography.Paragraph className="value">
-                  {cvData.phone || 'Not provided'}
+                  {cvData.cognizant_id ? (
+                    <Typography.Text copyable style={{ color: '#52c41a', fontWeight: '600', fontSize: '16px' }}>
+                      {cvData.cognizant_id}
+                    </Typography.Text>
+                  ) : (
+                    <Typography.Text type="secondary">Not provided</Typography.Text>
+                  )}
                 </Typography.Paragraph>
               </Col>
               <Col xs={24} md={8}>
-                <Typography.Text className="label">LinkedIn</Typography.Text>
+                <Typography.Text className="label">📱 Phone</Typography.Text>
+                <Typography.Paragraph className="value">
+                  {cvData.phone ? (
+                    <Typography.Text copyable style={{ color: '#1890ff', fontWeight: '500' }}>
+                      {cvData.phone}
+                    </Typography.Text>
+                  ) : (
+                    <Typography.Text type="secondary">Not provided</Typography.Text>
+                  )}
+                </Typography.Paragraph>
+              </Col>
+            </Row>
+            <Row gutter={[16, 16]} className="info-grid" style={{ marginTop: '16px' }}>
+              <Col xs={24}>
+                <Typography.Text className="label">🔗 LinkedIn</Typography.Text>
                 <Typography.Paragraph className="value">
                   {cvData.linkedin ? (
-                    <Typography.Link href={cvData.linkedin} target="_blank">
+                    <Typography.Link href={cvData.linkedin} target="_blank" style={{ fontSize: '14px' }}>
                       {cvData.linkedin}
                     </Typography.Link>
                   ) : (
-                    'Not provided'
+                    <Typography.Text type="secondary">Not provided</Typography.Text>
                   )}
                 </Typography.Paragraph>
               </Col>
             </Row>
           </Card>
+
+          {/* Availability Info */}
+          {(cvData.availability || matchData?.availability) && (
+            <Card className="availability-info-card">
+              <Typography.Title level={5}>Availability Status</Typography.Title>
+              <Row gutter={[16, 16]} className="info-grid">
+                <Col xs={24} md={12}>
+                  <Typography.Text className="label">Current Status</Typography.Text>
+                  <Typography.Paragraph className="value">
+                    {(() => {
+                      const availability = cvData.availability || matchData?.availability;
+                      if (!availability) return 'Unknown';
+                      
+                      let icon, color, text;
+                      
+                      switch (availability.status) {
+                        case 'available_now':
+                          icon = '🟢';
+                          color = '#52c41a';
+                          text = 'Available Now';
+                          break;
+                        case 'assigned':
+                          icon = '🟠';
+                          color = '#fa8c16';
+                          text = availability.available_from ? `Available from ${availability.available_from}` : 'Currently Assigned';
+                          break;
+                        default:
+                          icon = '⚪';
+                          color = '#8c8c8c';
+                          text = 'Unknown Status';
+                      }
+                      
+                      return (
+                        <Tag color={color} style={{ fontSize: '14px', padding: '4px 12px' }}>
+                          {icon} {text}
+                        </Tag>
+                      );
+                    })()}
+                  </Typography.Paragraph>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Typography.Text className="label">Current Project</Typography.Text>
+                  <Typography.Paragraph className="value">
+                    {(cvData.availability || matchData?.availability)?.current_project || 'Not specified'}
+                  </Typography.Paragraph>
+                </Col>
+              </Row>
+              {(cvData.availability || matchData?.availability)?.message && (
+                <Row>
+                  <Col span={24}>
+                    <Typography.Text className="label">Details</Typography.Text>
+                    <Typography.Paragraph className="value" style={{ fontStyle: 'italic', color: '#666' }}>
+                      {(cvData.availability || matchData?.availability)?.message}
+                    </Typography.Paragraph>
+                  </Col>
+                </Row>
+              )}
+            </Card>
+          )}
 
           {/* Summary */}
           <Card className="summary-card">

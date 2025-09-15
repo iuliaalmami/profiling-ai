@@ -6,6 +6,7 @@ import { Avatar, Typography, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useVersion } from '../../hooks/useVersion';
 import header from '../../assets/global-header.png';
 import avatar from '../../assets/avatar.png';
 import './Header.scss';
@@ -15,6 +16,7 @@ const { Text } = Typography;
 const Header = () => {
   const { logout, user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const { version } = useVersion();
 
   const handleLogout = () => {
     logout();
@@ -52,7 +54,9 @@ const Header = () => {
         <div className="logo">
           <img src={header} alt="Logo" className="logo-image" />
         </div>
-        <span className="title">Profiling AI</span>
+        <span className="title">
+          Profiling AI {version && `${version}`}
+        </span>
       </div>
 
       <div className="header-right">

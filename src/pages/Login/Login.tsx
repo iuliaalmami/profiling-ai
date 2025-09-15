@@ -36,7 +36,8 @@ const LoginPage = () => {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       };
       
-      const response = await api.public.post(`${API_BASE_URL}/api/v1${endpoint}`, requestData);
+      //const response = await api.public.post(`${API_BASE_URL}/api/v1${endpoint}`, requestData);
+      const response = await api.public.post(endpoint, requestData);
 
       if (response.ok) {
         const data = await response.json();

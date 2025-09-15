@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, memo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb, Alert, Input, message } from 'antd';
-import { SearchOutlined, CopyOutlined } from '@ant-design/icons';
+import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb, Alert, Input, message, Tag, Tooltip } from 'antd';
+import { SearchOutlined, CopyOutlined, ExclamationCircleOutlined, ClockCircleOutlined, CheckCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 // import { useAuth } from '../../contexts/AuthContext'; // Not needed for this component
 import { api, API_BASE_URL } from '../../utils/api';
 import './ProfileMatch.scss';
@@ -40,6 +40,14 @@ const ProfileMatch = () => {
       company?: string;
       duration?: string;
     }>;
+    availability?: AvailabilityInfo; // NEW: Employee availability data
+  }
+
+  interface AvailabilityInfo {
+    status: string; // "available_now", "assigned", "unknown"
+    message: string;
+    available_from?: string;
+    current_project?: string;
   }
 
   interface CvData {
@@ -47,6 +55,7 @@ const ProfileMatch = () => {
     cv_id?: number;
     name: string;
     email?: string;
+    cognizant_id?: string;
     phone?: string;
     linkedin?: string;
     summary?: string;
@@ -60,6 +69,7 @@ const ProfileMatch = () => {
     last_job_title?: string;
     role?: string;
     last_update?: string; // Added to match new API response (no embeddings)
+    availability?: AvailabilityInfo; // NEW: Employee availability data
   }
 
   interface MatchWithCvsResponse {
@@ -186,6 +196,7 @@ const ProfileMatch = () => {
             job_prompt: match.job_prompt, // NEW: Include job prompt from backend
             skills: cvData?.skills || [], // Include skills for search
             experience: cvData?.experience || [], // Include experience for search
+            availability: cvData?.availability, // NEW: Include availability data
           };
           return result;
         });
@@ -239,7 +250,14 @@ const ProfileMatch = () => {
       // Search in summary
       const summaryMatch = match.summary?.toLowerCase().includes(searchLower) || false;
       
-      return nameMatch || roleMatch || skillsMatch || experienceMatch || summaryMatch;
+      // Search in availability status and project
+      const availabilityMatch = match.availability ? (
+        match.availability.message?.toLowerCase().includes(searchLower) ||
+        match.availability.current_project?.toLowerCase().includes(searchLower) ||
+        match.availability.status?.toLowerCase().includes(searchLower)
+      ) : false;
+      
+      return nameMatch || roleMatch || skillsMatch || experienceMatch || summaryMatch || availabilityMatch;
     });
 
     setFilteredMatches(filtered);
@@ -251,6 +269,17 @@ const ProfileMatch = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+  };
+
+  // Helper function to check if profile is older than 3 months
+  const isProfileOutdated = (lastUpdated: string): boolean => {
+    if (!lastUpdated) return true; // Consider profiles without update date as outdated
+    
+    const updateDate = new Date(lastUpdated);
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
+    return updateDate < threeMonthsAgo;
   };
 
   const columns = useMemo(() => [
@@ -271,6 +300,7 @@ const ProfileMatch = () => {
                 chatId: chatId,
                 matchId: record.match_id,
                 matchSummary: record.summary, // Pass the summary directly
+                availability: record.availability, // NEW: Pass availability data
               },
             });
           }}
@@ -308,19 +338,84 @@ const ProfileMatch = () => {
       },
     },
     {
+      title: 'Availability',
+      dataIndex: 'availability',
+      key: 'availability',
+      render: (availability: AvailabilityInfo) => {
+        if (!availability) {
+          return (
+            <Tag icon={<QuestionCircleOutlined />} color="default">
+              Unknown
+            </Tag>
+          );
+        }
+
+        const { status, message, available_from, current_project } = availability;
+
+        let icon, color, text;
+        
+        switch (status) {
+          case 'available_now':
+            icon = <CheckCircleOutlined />;
+            color = 'green';
+            text = 'Available Now';
+            break;
+          case 'assigned':
+            icon = <ClockCircleOutlined />;
+            color = 'orange';
+            text = available_from ? `From ${available_from}` : 'Assigned';
+            break;
+          default:
+            icon = <QuestionCircleOutlined />;
+            color = 'default';
+            text = 'Unknown';
+        }
+
+        return (
+          <Tooltip 
+            className="availability-tooltip"
+            title={
+              <div>
+                <div><strong>Status:</strong> {message}</div>
+                {current_project && <div><strong>Current Project:</strong> {current_project}</div>}
+                {available_from && <div><strong>Available From:</strong> {available_from}</div>}
+              </div>
+            }
+          >
+            <Tag icon={icon} color={color} className="availability-tag">
+              {text}
+            </Tag>
+          </Tooltip>
+        );
+      },
+    },
+    {
       title: 'Profile Last Updated',
       dataIndex: 'last_updated',
       key: 'last_updated',
       render: (dateString: string) => {
         try {
           const date = new Date(dateString);
-          return date.toLocaleDateString('en-US', {
+          const isOutdated = isProfileOutdated(dateString);
+          const formattedDate = date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
           });
+          
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span>{formattedDate}</span>
+              {isOutdated && (
+                <ExclamationCircleOutlined 
+                  style={{ color: '#ff4d4f', fontSize: '14px' }} 
+                  title="Profile hasn't been updated in over 3 months"
+                />
+              )}
+            </div>
+          );
         } catch {
           return dateString;
         }
@@ -341,6 +436,7 @@ const ProfileMatch = () => {
                 chatId: chatId,
                 matchId: record.match_id,
                 matchSummary: record.summary, // Pass the summary directly
+                availability: record.availability, // NEW: Pass availability data
               },
             });
           }}
@@ -448,7 +544,7 @@ const ProfileMatch = () => {
             <Row justify="space-between" align="middle" className="profile-match__search-section">
               <Col>
                 <Input.Search
-                  placeholder="Search by name, skills, role, company, or summary..."
+                  placeholder="Search by name, skills, role, company, availability, or summary..."
                   allowClear
                   enterButton={<SearchOutlined />}
                   size="middle"
@@ -458,7 +554,7 @@ const ProfileMatch = () => {
                 />
                 <div style={{ marginTop: 8 }}>
                   <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                    Try searching for: "banking", "React", "senior developer", "Google", etc.
+                    Try searching for: "banking", "React", "senior developer", "Google", "available now", "bench", etc.
                   </Typography.Text>
                 </div>
               </Col>

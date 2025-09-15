@@ -24,6 +24,7 @@ interface CVData {
   id: number;
   name: string;
   email: string;
+  cognizant_id?: string;
   experience: Array<{
     role?: string;
     title?: string;

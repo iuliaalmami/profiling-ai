@@ -14,9 +14,12 @@ import {
   message,
   Input,
   Tag,
+  Tooltip,
+  DatePicker,
 } from 'antd';
 import type { ColumnsType, SortOrder } from 'antd/es/table/interface';
-import { InboxOutlined, SearchOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { InboxOutlined, SearchOutlined, ClockCircleOutlined, ExclamationCircleOutlined, CheckCircleOutlined, QuestionCircleOutlined, FilterOutlined } from '@ant-design/icons';
+import { Dayjs } from 'dayjs';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, API_BASE_URL } from '../../utils/api';
 import './Profile.scss';
@@ -24,10 +27,28 @@ import './Profile.scss';
 const { Content } = Layout;
 const { Title } = Typography;
 
+interface EmployeeData {
+  associate_name?: string;
+  grade?: string;
+  designation?: string;
+  date_of_joining?: string;
+  dept_name?: string;
+  project_id?: string;
+  project_description?: string;
+  account_id?: string;
+  account_name?: string;
+  billability_status?: string;
+  city?: string;
+  assignment_start_date?: string;
+  assignment_end_date?: string;
+  percentage_allocation?: string;
+}
+
 interface ProfileData {
   id: string;
   cv_id?: number | string;
   name: string;
+  cognizant_id?: string;
   role?: string;
   last_updated?: string;
   skills?: string[];
@@ -37,6 +58,7 @@ interface ProfileData {
     company?: string;
     duration?: string;
   }>;
+  employee_data?: EmployeeData | null;
 }
 
 const ProfilePage = () => {
@@ -45,6 +67,7 @@ const ProfilePage = () => {
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
   const [filteredProfiles, setFilteredProfiles] = useState<ProfileData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [availabilityFilterDate, setAvailabilityFilterDate] = useState<Dayjs | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -57,15 +80,45 @@ const ProfilePage = () => {
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [showAllExperience, setShowAllExperience] = useState(false);
   
-  // Bulk upload results state
-  const [bulkUploadResults, setBulkUploadResults] = useState<any>(null);
+  // Bulk upload results state (keeping for backward compatibility)
+  const [bulkUploadResults, setBulkUploadResults] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [showBulkResults, setShowBulkResults] = useState(false);
+  
+  // Confirmation modal state
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [extractedData, setExtractedData] = useState<{
+    name: string;
+    cognizant_id: string;
+    filename: string;
+    rawData: any;
+  } | null>(null);
+  
+  // Bulk confirmation modal state
+  const [isBulkConfirmationModalOpen, setIsBulkConfirmationModalOpen] = useState(false);
+  const [bulkExtractedData, setBulkExtractedData] = useState<{
+    results: Array<{
+      filename: string;
+      name: string;
+      cognizant_id: string;
+      email: string;
+      status: 'success' | 'failed';
+      error_message?: string;
+      extracted_data?: any;
+    }>;
+    summary: any;
+  } | null>(null);
+  
+  // Edit Cognizant ID modal state
+  const [isEditCognizantIdModalOpen, setIsEditCognizantIdModalOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<ProfileData | null>(null);
+  const [newCognizantId, setNewCognizantId] = useState('');
 
   useEffect(() => {
     const fetchProfiles = async () => {
       setLoading(true);
       try {
-        const profilesRes = await api.get(`${API_BASE_URL}/api/v1/profiles`);
+        // Request profiles with employee data
+        const profilesRes = await api.get(`${API_BASE_URL}/api/v1/profiles?include_employee_data=true`);
 
         if (!profilesRes.ok) {
           throw new Error(`Failed to fetch profiles: ${profilesRes.status}`);
@@ -79,6 +132,7 @@ const ProfilePage = () => {
             id: profile.id?.toString() || profile.cv_id?.toString() || 'unknown',
             cv_id: profile.cv_id || profile.id, // Use profile.id as cv_id if cv_id is not available
             name: profile.name || 'Unknown',
+            cognizant_id: profile.cognizant_id,
             role: extractRole(profile),
             last_updated:
               profile.last_update ||
@@ -87,6 +141,7 @@ const ProfilePage = () => {
               new Date().toISOString(),
             skills: profile.skills || [],
             experience: profile.experience || [],
+            employee_data: profile.employee_data || null,
           }));
 
           setProfiles(processedProfiles);
@@ -104,32 +159,52 @@ const ProfilePage = () => {
     fetchProfiles();
   }, []);
 
-  // Filter profiles based on search term
+  // Filter profiles based on search term and availability
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredProfiles(profiles);
-      return;
+    let filtered = profiles;
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(profile => {
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Search in name
+        const nameMatch = profile.name.toLowerCase().includes(searchLower);
+        
+        // Search in skills
+        const skillsMatch = profile.skills?.some(skill => 
+          skill.toLowerCase().includes(searchLower)
+        ) || false;
+        
+        // Search in role (optional)
+        const roleMatch = profile.role?.toLowerCase().includes(searchLower) || false;
+        
+        return nameMatch || skillsMatch || roleMatch;
+      });
     }
 
-    const filtered = profiles.filter(profile => {
-      const searchLower = searchTerm.toLowerCase();
-      
-      // Search in name
-      const nameMatch = profile.name.toLowerCase().includes(searchLower);
-      
-      // Search in skills
-      const skillsMatch = profile.skills?.some(skill => 
-        skill.toLowerCase().includes(searchLower)
-      ) || false;
-      
-      // Search in role (optional)
-      const roleMatch = profile.role?.toLowerCase().includes(searchLower) || false;
-      
-      return nameMatch || skillsMatch || roleMatch;
-    });
+    // Apply availability filter - "Available from" (includes those already available)
+    if (availabilityFilterDate) {
+      filtered = filtered.filter(profile => {
+        const availability = formatAvailability(profile.employee_data || null);
+        
+        if (availability === 'Now') {
+          // Available now - always included in "available from" filter
+          return true;
+        } else if (availability === 'Unknown') {
+          // Unknown availability - don't include in date-based filters
+          return false;
+        } else {
+          // Has a specific availability date - show if available from selected date or earlier
+          const availabilityDate = new Date(profile.employee_data?.assignment_end_date || '');
+          const filterDate = availabilityFilterDate.toDate();
+          return availabilityDate <= filterDate;
+        }
+      });
+    }
 
     setFilteredProfiles(filtered);
-  }, [searchTerm, profiles]);
+  }, [searchTerm, profiles, availabilityFilterDate]);
 
   const extractRole = (profile: any): string => {
     // Similar role extraction logic as in matches page
@@ -320,6 +395,37 @@ const ProfilePage = () => {
     return 'Mid-level';
   };
 
+  // Helper function to check if profile is older than 3 months
+  const isProfileOutdated = (lastUpdated: string): boolean => {
+    if (!lastUpdated) return true; // Consider profiles without update date as outdated
+    
+    const updateDate = new Date(lastUpdated);
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
+    return updateDate < threeMonthsAgo;
+  };
+
+  // Helper function to format availability display
+  const formatAvailability = (employeeData: EmployeeData | null): string => {
+    if (!employeeData) {
+      return 'Unknown';
+    }
+
+    const BENCH_PROJECT_ID = "1000385159.0";
+    
+    if (employeeData.project_id === BENCH_PROJECT_ID) {
+      return 'Now';
+    }
+    
+    if (employeeData.assignment_end_date) {
+      const endDate = new Date(employeeData.assignment_end_date);
+      return endDate.toLocaleDateString();
+    }
+    
+    return 'Unknown';
+  };
+
   // Helper functions for file type handling
   const hasZipFiles = (): boolean => {
     return fileList.some(file => 
@@ -384,11 +490,11 @@ const ProfilePage = () => {
          formData.append(fieldName, file);
        });
 
-       // Use bulk upload endpoint for multiple files OR if any ZIP files are present
-       // Single endpoint only for single PDF files
+       // Use bulk process endpoint for multiple files OR if any ZIP files are present (no immediate save)
+       // Use process-cv endpoint for single files (no immediate save)
        const endpoint = isBulkUpload
-         ? `${API_BASE_URL}/api/v1/upload-cv/bulk`
-         : `${API_BASE_URL}/api/v1/upload-cv`;
+         ? `${API_BASE_URL}/api/v1/process-cv/bulk`
+         : `${API_BASE_URL}/api/v1/process-cv`;
 
       const response = await api.post(endpoint, formData, {
         headers: {
@@ -400,31 +506,42 @@ const ProfilePage = () => {
         const result = await response.json();
         
                  if (isBulkUpload) {
-           // Handle bulk upload response
-           const { summary } = result;
+           // Handle bulk process response - show confirmation modal
+           const { summary, results } = result;
            
-           // Show detailed results
-           if (summary.successful_uploads > 0) {
-             message.success(
-               `Bulk upload completed! ${summary.successful_uploads}/${summary.total_files} files uploaded successfully.`
-             );
-           }
+           // Transform results for confirmation modal
+           const transformedResults = results.map((r: any) => ({
+             filename: r.filename,
+             name: r.extracted_data?.name || 'Unknown',
+             cognizant_id: r.extracted_data?.cognizant_id || '',
+             email: r.extracted_data?.email || '',
+             status: r.status,
+             error_message: r.error_message,
+             extracted_data: r.extracted_data
+           }));
            
-           if (summary.failed_uploads > 0) {
-             message.warning(
-               `${summary.failed_uploads} file(s) failed to upload. Check details below.`
-             );
-           }
+           setBulkExtractedData({
+             results: transformedResults,
+             summary: summary
+           });
            
-           // Store results and show them in the same modal
-           setBulkUploadResults(result);
-           // Don't close modal yet - show results inline
+           setIsBulkConfirmationModalOpen(true);
+           handleModalClose(); // Close upload modal
          } else {
-           // Handle single upload response
-           message.success(`Successfully uploaded file`);
-           // Close modal and refresh for single upload
-           handleModalClose();
-           window.location.reload();
+           // Handle single upload response - show confirmation modal
+           const extractedName = result.name || 'Unknown';
+           const extractedCognizantId = result.cognizant_id || '';
+           const filename = fileList[0]?.name || 'Unknown file';
+           
+           setExtractedData({
+             name: extractedName,
+             cognizant_id: extractedCognizantId,
+             filename: filename,
+             rawData: result
+           });
+           
+           setIsConfirmationModalOpen(true);
+           handleModalClose(); // Close upload modal
          }
       } else {
         const errorText = await response.text();
@@ -439,6 +556,150 @@ const ProfilePage = () => {
       // Clear any loading messages
       message.destroy();
     }
+  };
+
+  const handleConfirmationConfirm = async (confirmedData: { name: string; cognizant_id: string }) => {
+    if (!extractedData) return;
+    
+    try {
+      // Prepare data for saving to database
+      const cvDataToSave = {
+        ...extractedData.rawData,
+        name: confirmedData.name,
+        cognizant_id: confirmedData.cognizant_id
+      };
+
+      // Save to database via API
+      const response = await api.post(`${API_BASE_URL}/api/v1/confirm-cv`, cvDataToSave);
+      
+      if (response.ok) {
+        const savedCvData = await response.json();
+        
+        // Create a new profile with the saved data
+        const newProfile: ProfileData = {
+          id: savedCvData.id?.toString() || 'new',
+          cv_id: savedCvData.id,
+          name: savedCvData.name,
+          cognizant_id: savedCvData.cognizant_id,
+          role: extractRole(savedCvData),
+          last_updated: savedCvData.last_update || new Date().toISOString(),
+          skills: savedCvData.skills || [],
+          experience: savedCvData.experience || [],
+        };
+
+        // Add to profiles list
+        setProfiles(prev => [newProfile, ...prev]);
+        setFilteredProfiles(prev => [newProfile, ...prev]);
+        
+        message.success('Profile added successfully!');
+        setIsConfirmationModalOpen(false);
+        setExtractedData(null);
+      } else {
+        throw new Error('Failed to save to database');
+      }
+    } catch (error) {
+      console.error('Error confirming profile:', error);
+      message.error('Failed to save profile. Please try again.');
+    }
+  };
+
+  const handleConfirmationCancel = () => {
+    setIsConfirmationModalOpen(false);
+    setExtractedData(null);
+    message.info('Upload cancelled');
+  };
+
+  const handleBulkConfirmationConfirm = async (confirmedData: Array<{ filename: string; name: string; cognizant_id: string }>) => {
+    if (!bulkExtractedData) return;
+    
+    try {
+      // Prepare data for saving to database
+      const bulkDataToSave = {
+        ...bulkExtractedData,
+        results: bulkExtractedData.results.map(result => {
+          if (result.status === 'success') {
+            const confirmed = confirmedData.find(c => c.filename === result.filename);
+            if (confirmed && result.extracted_data) {
+              return {
+                ...result,
+                extracted_data: {
+                  ...result.extracted_data,
+                  name: confirmed.name,
+                  cognizant_id: confirmed.cognizant_id
+                }
+              };
+            }
+          }
+          return result;
+        })
+      };
+
+      // Save to database via API
+      const response = await api.post(`${API_BASE_URL}/api/v1/confirm-cv/bulk`, bulkDataToSave);
+      
+      if (response.ok) {
+        const savedData = await response.json();
+        
+        message.success(`Successfully saved ${savedData.summary.successful_saves} profiles!`);
+        setIsBulkConfirmationModalOpen(false);
+        setBulkExtractedData(null);
+        handleModalClose(); // Close upload modal
+        
+        // Refresh the profiles list to get updated data from database
+        window.location.reload();
+      } else {
+        throw new Error('Failed to save to database');
+      }
+    } catch (error) {
+      console.error('Error confirming bulk profiles:', error);
+      message.error('Failed to save profiles. Please try again.');
+    }
+  };
+
+  const handleBulkConfirmationCancel = () => {
+    setIsBulkConfirmationModalOpen(false);
+    setBulkExtractedData(null);
+    message.info('Bulk upload cancelled');
+  };
+
+  const handleEditCognizantId = (profile: ProfileData) => {
+    setEditingProfile(profile);
+    setNewCognizantId(profile.cognizant_id || '');
+    setIsEditCognizantIdModalOpen(true);
+  };
+
+  const handleUpdateCognizantId = async () => {
+    if (!editingProfile || !newCognizantId.trim()) {
+      message.error('Please enter a valid Cognizant ID');
+      return;
+    }
+
+    try {
+      const response = await api.patch(`${API_BASE_URL}/api/v1/cv/${editingProfile.cv_id}/cognizant-id`, {
+        cognizant_id: newCognizantId.trim()
+      });
+
+      if (response.ok) {
+        message.success('Cognizant ID updated successfully!');
+        setIsEditCognizantIdModalOpen(false);
+        setEditingProfile(null);
+        setNewCognizantId('');
+        
+        // Refresh the profiles list to show updated data
+        window.location.reload();
+      } else {
+        throw new Error('Failed to update Cognizant ID');
+      }
+    } catch (error) {
+      console.error('Error updating Cognizant ID:', error);
+      message.error('Failed to update Cognizant ID. Please try again.');
+    }
+  };
+
+  const handleCancelEditCognizantId = () => {
+    setIsEditCognizantIdModalOpen(false);
+    setEditingProfile(null);
+    setNewCognizantId('');
   };
 
   const uploadProps = {
@@ -487,6 +748,34 @@ const ProfilePage = () => {
               render: (text: string) => <span className="profile-page__table-name">{text}</span>,
     },
     {
+      title: 'Cognizant ID',
+      dataIndex: 'cognizant_id',
+      key: 'cognizant_id',
+      render: (cognizantId: string, record: ProfileData) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: '#1890ff', fontWeight: '500' }}>
+            {cognizantId || 'N/A'}
+          </span>
+          {(!cognizantId || cognizantId === 'N/A') && (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => handleEditCognizantId(record)}
+              style={{ 
+                padding: '0 4px',
+                height: 'auto',
+                fontSize: '12px',
+                color: '#1890ff'
+              }}
+              title="Add Cognizant ID"
+            >
+              +
+            </Button>
+          )}
+        </div>
+      ),
+    },
+    {
       title: 'Role',
       dataIndex: 'role',
       key: 'role',
@@ -495,6 +784,50 @@ const ProfilePage = () => {
           {role.length > 50 ? `${role.substring(0, 50)}...` : role}
         </span>
       ),
+    },
+    {
+      title: 'Availability',
+      dataIndex: 'employee_data',
+      key: 'availability',
+      render: (employeeData: EmployeeData | null) => {
+        const availability = formatAvailability(employeeData);
+        const isAvailableNow = availability === 'Now';
+        const isUnknown = availability === 'Unknown';
+        
+        let icon, color, text, className, tooltipTitle;
+        
+        if (isAvailableNow) {
+          icon = <CheckCircleOutlined />;
+          color = 'green';
+          text = 'Available Now';
+          className = 'availability-tag availability-tag--now';
+          tooltipTitle = employeeData?.project_description ? `Current Project: ${employeeData.project_description}` : 'Available for new assignments';
+        } else if (isUnknown) {
+          icon = <QuestionCircleOutlined />;
+          color = 'default';
+          text = 'Unknown';
+          className = 'availability-tag availability-tag--unknown';
+          tooltipTitle = 'Project information not available';
+        } else {
+          icon = <ClockCircleOutlined />;
+          color = 'orange';
+          text = `Available ${availability}`;
+          className = 'availability-tag availability-tag--future';
+          tooltipTitle = employeeData?.project_description ? `Current Project: ${employeeData.project_description}` : `Available from ${availability}`;
+        }
+        
+        return (
+          <Tooltip 
+            title={tooltipTitle}
+            placement="top"
+            className="availability-tooltip"
+          >
+            <Tag icon={icon} color={color} className={className}>
+              {text}
+            </Tag>
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Skills',
@@ -521,7 +854,19 @@ const ProfilePage = () => {
       defaultSortOrder: 'descend' as SortOrder,
       render: (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString();
+        const isOutdated = isProfileOutdated(dateString);
+        
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>{date.toLocaleDateString()}</span>
+            {isOutdated && (
+              <ExclamationCircleOutlined 
+                style={{ color: '#ff4d4f', fontSize: '14px' }} 
+                title="Profile hasn't been updated in over 3 months"
+              />
+            )}
+          </div>
+        );
       },
     },
     {
@@ -593,24 +938,59 @@ const ProfilePage = () => {
               </Title>
             </Col>
             <Col>
-              <Input.Search
-                placeholder="Search by name, skills, or role..."
-                allowClear
-                enterButton={<SearchOutlined />}
-                size="middle"
-                style={{ width: 300 }}
-                onSearch={handleSearch}
-                onChange={(e) => handleSearch(e.target.value)}
-                value={searchTerm}
-              />
+              <Space size="middle">
+                {/* Availability Filter */}
+                <Space.Compact>
+                  <span style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    padding: '0 12px', 
+                    background: '#f5f5f5', 
+                    border: '1px solid #d9d9d9',
+                    borderRight: 'none',
+                    borderRadius: '6px 0 0 6px',
+                    fontSize: '14px',
+                    color: '#666',
+                    fontWeight: '500'
+                  }}>
+                    <FilterOutlined style={{ marginRight: '6px' }} />
+                    Available from
+                  </span>
+                  <DatePicker
+                    placeholder="Select date"
+                    value={availabilityFilterDate}
+                    onChange={setAvailabilityFilterDate}
+                    style={{ width: 160 }}
+                    allowClear
+                  />
+                </Space.Compact>
+                
+                {/* Search Input */}
+                <Input.Search
+                  placeholder="Search by name, skills, or role..."
+                  allowClear
+                  enterButton={<SearchOutlined />}
+                  size="middle"
+                  style={{ width: 300 }}
+                  onSearch={handleSearch}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchTerm}
+                />
+              </Space>
             </Col>
           </Row>
           
-          {searchTerm && (
+          {(searchTerm || availabilityFilterDate) && (
             <div style={{ marginBottom: 16 }}>
               <Typography.Text type="secondary">
                 Showing {filteredProfiles.length} of {profiles.length} profiles
                 {searchTerm && ` for "${searchTerm}"`}
+                {availabilityFilterDate && (
+                  <span>
+                    {searchTerm && ' and '}
+                    available from {availabilityFilterDate.format('MMM DD, YYYY')}
+                  </span>
+                )}
               </Typography.Text>
             </div>
           )}
@@ -850,6 +1230,9 @@ const ProfilePage = () => {
                 <div className="label">Profile ID:</div>
                 <div className="value">{selectedProfile.id}</div>
                 
+                <div className="label">Cognizant ID:</div>
+                <div className="value">{selectedProfile.cognizant_id || 'Not assigned'}</div>
+                
                 <div className="label">Last Updated:</div>
                 <div className="value">
                   {selectedProfile.last_updated 
@@ -864,6 +1247,82 @@ const ProfilePage = () => {
                 </div>
               </div>
             </div>
+
+            {/* Employee Information */}
+            {selectedProfile.employee_data && (
+              <div className="section">
+                <div className="section-title">Employee Information</div>
+                <div className="info-grid">
+                  <div className="label">Employee Name:</div>
+                  <div className="value">{selectedProfile.employee_data.associate_name || 'N/A'}</div>
+                  
+                  <div className="label">Grade:</div>
+                  <div className="value">{selectedProfile.employee_data.grade || 'N/A'}</div>
+                  
+                  <div className="label">Designation:</div>
+                  <div className="value">{selectedProfile.employee_data.designation || 'N/A'}</div>
+                  
+                  <div className="label">Department:</div>
+                  <div className="value">{selectedProfile.employee_data.dept_name || 'N/A'}</div>
+                  
+                  <div className="label">Date of Joining:</div>
+                  <div className="value">
+                    {selectedProfile.employee_data.date_of_joining 
+                      ? new Date(selectedProfile.employee_data.date_of_joining).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })
+                      : 'N/A'}
+                  </div>
+                  
+                  <div className="label">Location:</div>
+                  <div className="value">{selectedProfile.employee_data.city || 'N/A'}</div>
+                  
+                  <div className="label">Billability Status:</div>
+                  <div className="value">
+                    <Tag color={selectedProfile.employee_data.billability_status === 'Y' ? 'green' : 'orange'}>
+                      {selectedProfile.employee_data.billability_status === 'Y' ? 'Billable' : 'Non-Billable'}
+                    </Tag>
+                  </div>
+                  
+                  <div className="label">Allocation:</div>
+                  <div className="value">{selectedProfile.employee_data.percentage_allocation || 'N/A'}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Current Assignment */}
+            {selectedProfile.employee_data && (selectedProfile.employee_data.project_description || selectedProfile.employee_data.account_name) && (
+              <div className="section">
+                <div className="section-title">Current Assignment</div>
+                <div className="info-grid">
+                  <div className="label">Project:</div>
+                  <div className="value">{selectedProfile.employee_data.project_description || 'N/A'}</div>
+                  
+                  <div className="label">Client Account:</div>
+                  <div className="value">{selectedProfile.employee_data.account_name || 'N/A'}</div>
+                  
+                  <div className="label">Project ID:</div>
+                  <div className="value">{selectedProfile.employee_data.project_id || 'N/A'}</div>
+                  
+                  <div className="label">Assignment Period:</div>
+                  <div className="value">
+                    {selectedProfile.employee_data.assignment_start_date && selectedProfile.employee_data.assignment_end_date
+                      ? `${new Date(selectedProfile.employee_data.assignment_start_date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })} - ${new Date(selectedProfile.employee_data.assignment_end_date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}`
+                      : 'N/A'}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Skills */}
             <div className="section">
@@ -941,6 +1400,26 @@ const ProfilePage = () => {
                   <span className="summary-label">Experience Level</span>
                   <span className="summary-value">{getExperienceLevel(selectedProfile)}</span>
                 </div>
+                {selectedProfile.employee_data && (
+                  <>
+                    <div className="summary-card">
+                      <span className="summary-label">Employee Status</span>
+                      <span className="summary-value">
+                        <Tag color={selectedProfile.employee_data.billability_status === 'Y' ? 'green' : 'orange'}>
+                          {selectedProfile.employee_data.billability_status === 'Y' ? 'Billable' : 'Non-Billable'}
+                        </Tag>
+                      </span>
+                    </div>
+                    <div className="summary-card">
+                      <span className="summary-label">Current Allocation</span>
+                      <span className="summary-value">{selectedProfile.employee_data.percentage_allocation || 'N/A'}</span>
+                    </div>
+                    <div className="summary-card">
+                      <span className="summary-label">Department</span>
+                      <span className="summary-value">{selectedProfile.employee_data.dept_name || 'N/A'}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -1041,6 +1520,256 @@ const ProfilePage = () => {
                 pagination={false}
                 size="small"
               />
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <Modal
+        title="Confirm Profile Information"
+        open={isConfirmationModalOpen}
+        onCancel={handleConfirmationCancel}
+        footer={null}
+        width={500}
+        className="confirmation-modal"
+      >
+        {extractedData && (
+          <div className="confirmation-content">
+            <div className="confirmation-header">
+              <Typography.Text type="secondary">
+                Please review and confirm the extracted information from: <strong>{extractedData.filename}</strong>
+              </Typography.Text>
+            </div>
+            
+            <div className="confirmation-fields">
+              <div className="field-group">
+                <Typography.Text strong>Name:</Typography.Text>
+                <Input
+                  value={extractedData.name}
+                  onChange={(e) => setExtractedData(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  placeholder="Enter name"
+                  style={{ marginTop: 8 }}
+                />
+              </div>
+              
+              <div className="field-group">
+                <Typography.Text strong>Cognizant ID:</Typography.Text>
+                <Input
+                  value={extractedData.cognizant_id}
+                  onChange={(e) => setExtractedData(prev => prev ? { ...prev, cognizant_id: e.target.value } : null)}
+                  placeholder="Enter Cognizant ID"
+                  style={{ marginTop: 8 }}
+                />
+              </div>
+            </div>
+            
+            <div className="confirmation-actions">
+              <Space>
+                <Button onClick={handleConfirmationCancel}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="primary" 
+                  onClick={() => handleConfirmationConfirm({
+                    name: extractedData.name,
+                    cognizant_id: extractedData.cognizant_id
+                  })}
+                >
+                  Done
+                </Button>
+              </Space>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Bulk Confirmation Modal */}
+      <Modal
+        title="Confirm Bulk Upload Information"
+        open={isBulkConfirmationModalOpen}
+        onCancel={handleBulkConfirmationCancel}
+        footer={null}
+        width={800}
+        className="bulk-confirmation-modal"
+      >
+        {bulkExtractedData && (
+          <div className="bulk-confirmation-content">
+            <div className="bulk-confirmation-header">
+              <Typography.Text type="secondary">
+                Please review and confirm the extracted information for {bulkExtractedData.results.length} files:
+              </Typography.Text>
+            </div>
+            
+            <div className="bulk-confirmation-table">
+              <Table
+                dataSource={bulkExtractedData.results}
+                columns={[
+                  {
+                    title: 'Filename',
+                    dataIndex: 'filename',
+                    key: 'filename',
+                    width: 200,
+                    render: (filename: string) => (
+                      <Typography.Text strong>{filename}</Typography.Text>
+                    ),
+                  },
+                  {
+                    title: 'Status',
+                    dataIndex: 'status',
+                    key: 'status',
+                    width: 100,
+                    render: (status: string) => (
+                      <Tag color={status === 'success' ? 'success' : 'error'}>
+                        {status === 'success' ? '✅' : '❌'}
+                      </Tag>
+                    ),
+                  },
+                  {
+                    title: 'Name',
+                    dataIndex: 'name',
+                    key: 'name',
+                    width: 150,
+                    render: (name: string, record: any) => (
+                      record.status === 'success' ? (
+                        <Input
+                          value={name}
+                          onChange={(e) => {
+                            const newResults = bulkExtractedData.results.map(r => 
+                              r.filename === record.filename 
+                                ? { ...r, name: e.target.value }
+                                : r
+                            );
+                            setBulkExtractedData(prev => prev ? { ...prev, results: newResults } : null);
+                          }}
+                          placeholder="Enter name"
+                          size="small"
+                        />
+                      ) : (
+                        <Typography.Text type="secondary">-</Typography.Text>
+                      )
+                    ),
+                  },
+                  {
+                    title: 'Cognizant ID',
+                    dataIndex: 'cognizant_id',
+                    key: 'cognizant_id',
+                    width: 150,
+                    render: (cognizantId: string, record: any) => (
+                      record.status === 'success' ? (
+                        <Input
+                          value={cognizantId}
+                          onChange={(e) => {
+                            const newResults = bulkExtractedData.results.map(r => 
+                              r.filename === record.filename 
+                                ? { ...r, cognizant_id: e.target.value }
+                                : r
+                            );
+                            setBulkExtractedData(prev => prev ? { ...prev, results: newResults } : null);
+                          }}
+                          placeholder="Enter Cognizant ID"
+                          size="small"
+                        />
+                      ) : (
+                        <Typography.Text type="secondary">-</Typography.Text>
+                      )
+                    ),
+                  },
+                  {
+                    title: 'Error',
+                    dataIndex: 'error_message',
+                    key: 'error_message',
+                    render: (error: string) => (
+                      error ? (
+                        <Typography.Text type="danger" style={{ fontSize: '12px' }}>
+                          {error}
+                        </Typography.Text>
+                      ) : (
+                        <Typography.Text type="secondary">-</Typography.Text>
+                      )
+                    ),
+                  },
+                ]}
+                pagination={false}
+                size="small"
+                scroll={{ y: 400 }}
+              />
+            </div>
+            
+            <div className="bulk-confirmation-summary">
+              <Typography.Text>
+                <strong>Summary:</strong> {bulkExtractedData.summary.successful_uploads} successful, {bulkExtractedData.summary.failed_uploads} failed
+              </Typography.Text>
+            </div>
+            
+            <div className="bulk-confirmation-actions">
+              <Space>
+                <Button onClick={handleBulkConfirmationCancel}>
+                  Cancel All
+                </Button>
+                <Button 
+                  type="primary" 
+                  onClick={() => {
+                    const successfulResults = bulkExtractedData.results.filter(r => r.status === 'success');
+                    const confirmedData = successfulResults.map(r => ({
+                      filename: r.filename,
+                      name: r.name,
+                      cognizant_id: r.cognizant_id
+                    }));
+                    handleBulkConfirmationConfirm(confirmedData);
+                  }}
+                  disabled={bulkExtractedData.summary.successful_uploads === 0}
+                >
+                  Confirm All ({bulkExtractedData.summary.successful_uploads})
+                </Button>
+              </Space>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Edit Cognizant ID Modal */}
+      <Modal
+        title="Edit Cognizant ID"
+        open={isEditCognizantIdModalOpen}
+        onCancel={handleCancelEditCognizantId}
+        footer={null}
+        width={400}
+        className="edit-cognizant-id-modal"
+      >
+        {editingProfile && (
+          <div className="edit-cognizant-id-content">
+            <div className="edit-cognizant-id-header">
+              <Typography.Text type="secondary">
+                Update Cognizant ID for: <strong>{editingProfile.name}</strong>
+              </Typography.Text>
+            </div>
+            
+            <div className="edit-cognizant-id-field">
+              <Typography.Text strong style={{ marginBottom: 8, display: 'block' }}>
+                Cognizant ID:
+              </Typography.Text>
+              <Input
+                value={newCognizantId}
+                onChange={(e) => setNewCognizantId(e.target.value)}
+                placeholder="Enter Cognizant ID"
+                style={{ marginBottom: 16 }}
+              />
+            </div>
+            
+            <div className="edit-cognizant-id-actions">
+              <Space>
+                <Button onClick={handleCancelEditCognizantId}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="primary" 
+                  onClick={handleUpdateCognizantId}
+                  disabled={!newCognizantId.trim()}
+                >
+                  Update
+                </Button>
+              </Space>
             </div>
           </div>
         )}

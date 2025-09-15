@@ -75,6 +75,121 @@
     background-color: #f5f5f5 !important;
   }
 
+  // Enhanced availability column styling
+  .availability-tag {
+    &.ant-tag {
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 12px;
+      padding: 4px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      
+      &.availability-tag--now {
+        background-color: #f6ffed;
+        border-color: #b7eb8f;
+        color: #52c41a;
+        
+        &:hover {
+          background-color: #d9f7be;
+          border-color: #95de64;
+        }
+      }
+      
+      &.availability-tag--future {
+        background-color: #fff7e6;
+        border-color: #ffd591;
+        color: #fa8c16;
+        
+        &:hover {
+          background-color: #ffe7ba;
+          border-color: #ffb84d;
+        }
+      }
+      
+      &.availability-tag--unknown {
+        background-color: #f5f5f5;
+        border-color: #d9d9d9;
+        color: #8c8c8c;
+        
+        &:hover {
+          background-color: #e8e8e8;
+          border-color: #bfbfbf;
+        }
+      }
+    }
+  }
+
+  // Availability tooltip styling
+  .availability-tooltip {
+    .ant-tooltip-inner {
+      max-width: 300px;
+      text-align: left;
+      font-size: 13px;
+      line-height: 1.4;
+      padding: 8px 12px;
+      background-color: rgba(0, 0, 0, 0.85);
+      border-radius: 6px;
+      
+      // Add subtle animation
+      animation: tooltipFadeIn 0.2s ease-out;
+    }
+    
+    .ant-tooltip-arrow {
+      &::before {
+        background-color: rgba(0, 0, 0, 0.85);
+      }
+    }
+  }
+
+  // Availability filter styling
+  .ant-space-compact {
+    .ant-picker {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      
+      &:hover {
+        border-color: #40a9ff;
+      }
+      
+      &.ant-picker-focused {
+        border-color: #40a9ff;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+      }
+    }
+    
+    // Label styling
+    span {
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background-color: #e8e8e8 !important;
+        border-color: #40a9ff !important;
+      }
+    }
+  }
+}
+
+// Tooltip animation
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profiles-layout {
   .ant-btn-link {
     padding: 0;
   }
@@ -115,6 +230,83 @@
 
     .ant-select {
       margin: 0 8px;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Bulk Confirmation Modal Styles
+.bulk-confirmation-modal {
+  .bulk-confirmation-content {
+    .bulk-confirmation-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .bulk-confirmation-table {
+      margin-bottom: 16px;
+      
+      .ant-table-tbody > tr > td {
+        padding: 8px;
+      }
+    }
+    
+    .bulk-confirmation-summary {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    .bulk-confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
     }
   }
 }
@@ -182,6 +374,83 @@
 
     .ant-btn {
       margin-left: 8px;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Bulk Confirmation Modal Styles
+.bulk-confirmation-modal {
+  .bulk-confirmation-content {
+    .bulk-confirmation-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .bulk-confirmation-table {
+      margin-bottom: 16px;
+      
+      .ant-table-tbody > tr > td {
+        padding: 8px;
+      }
+    }
+    
+    .bulk-confirmation-summary {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    .bulk-confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
     }
   }
 }
@@ -315,6 +584,36 @@
           width: 30px;
           height: 2px;
           background: #4dabf7;
+        }
+      }
+      
+      // Special styling for Employee Information section
+      &:nth-of-type(2) {
+        background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+        border-left: 4px solid #4caf50;
+        
+        .section-title {
+          color: #2e7d32;
+          border-bottom-color: #4caf50;
+          
+          &::after {
+            background: linear-gradient(90deg, #4caf50, #66bb6a);
+          }
+        }
+      }
+      
+      // Special styling for Current Assignment section
+      &:nth-of-type(3) {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+        border-left: 4px solid #ff9800;
+        
+        .section-title {
+          color: #e65100;
+          border-bottom-color: #ff9800;
+          
+          &::after {
+            background: linear-gradient(90deg, #ff9800, #ffb74d);
+          }
         }
       }
       
@@ -536,6 +835,190 @@
   }
 }
 
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Bulk Confirmation Modal Styles
+.bulk-confirmation-modal {
+  .bulk-confirmation-content {
+    .bulk-confirmation-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .bulk-confirmation-table {
+      margin-bottom: 16px;
+      
+      .ant-table-tbody > tr > td {
+        padding: 8px;
+      }
+    }
+    
+    .bulk-confirmation-summary {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    .bulk-confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Confirmation Modal Styles
+.confirmation-modal {
+  .confirmation-content {
+    .confirmation-header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .confirmation-fields {
+      margin-bottom: 24px;
+      
+      .field-group {
+        margin-bottom: 16px;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+    
+    .confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Bulk Confirmation Modal Styles
+.bulk-confirmation-modal {
+  .bulk-confirmation-content {
+    .bulk-confirmation-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .bulk-confirmation-table {
+      margin-bottom: 16px;
+      
+      .ant-table-tbody > tr > td {
+        padding: 8px;
+      }
+    }
+    
+    .bulk-confirmation-summary {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    .bulk-confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
 // Additional Profile Page Classes
 .profile-page {
   &__modal-title {
@@ -585,11 +1068,13 @@
   }
 
   &__table-date {
-    // Additional styling if needed
+    font-weight: 500;
   }
 
   &__header-row {
-    // Additional styling if needed
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 }
 
@@ -668,6 +1153,190 @@
           padding: 12px 8px;
         }
       }
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Bulk Confirmation Modal Styles
+.bulk-confirmation-modal {
+  .bulk-confirmation-content {
+    .bulk-confirmation-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .bulk-confirmation-table {
+      margin-bottom: 16px;
+      
+      .ant-table-tbody > tr > td {
+        padding: 8px;
+      }
+    }
+    
+    .bulk-confirmation-summary {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    .bulk-confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Confirmation Modal Styles
+.confirmation-modal {
+  .confirmation-content {
+    .confirmation-header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .confirmation-fields {
+      margin-bottom: 24px;
+      
+      .field-group {
+        margin-bottom: 16px;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+    
+    .confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Bulk Confirmation Modal Styles
+.bulk-confirmation-modal {
+  .bulk-confirmation-content {
+    .bulk-confirmation-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .bulk-confirmation-table {
+      margin-bottom: 16px;
+      
+      .ant-table-tbody > tr > td {
+        padding: 8px;
+      }
+    }
+    
+    .bulk-confirmation-summary {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    .bulk-confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
     }
   }
 }
@@ -798,6 +1467,190 @@
         padding: 8px 6px;
         font-size: 12px;
       }
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Bulk Confirmation Modal Styles
+.bulk-confirmation-modal {
+  .bulk-confirmation-content {
+    .bulk-confirmation-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .bulk-confirmation-table {
+      margin-bottom: 16px;
+      
+      .ant-table-tbody > tr > td {
+        padding: 8px;
+      }
+    }
+    
+    .bulk-confirmation-summary {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    .bulk-confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Confirmation Modal Styles
+.confirmation-modal {
+  .confirmation-content {
+    .confirmation-header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .confirmation-fields {
+      margin-bottom: 24px;
+      
+      .field-group {
+        margin-bottom: 16px;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+    
+    .confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Bulk Confirmation Modal Styles
+.bulk-confirmation-modal {
+  .bulk-confirmation-content {
+    .bulk-confirmation-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .bulk-confirmation-table {
+      margin-bottom: 16px;
+      
+      .ant-table-tbody > tr > td {
+        padding: 8px;
+      }
+    }
+    
+    .bulk-confirmation-summary {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    .bulk-confirmation-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+  }
+}
+
+// Edit Cognizant ID Modal Styles
+.edit-cognizant-id-modal {
+  .edit-cognizant-id-content {
+    .edit-cognizant-id-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .edit-cognizant-id-field {
+      margin-bottom: 20px;
+    }
+    
+    .edit-cognizant-id-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
     }
   }
 }

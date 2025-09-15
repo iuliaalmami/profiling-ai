@@ -1,7 +1,14 @@
 // API utility with automatic token expiration handling
 
 // Get the base API URL from environment variables
-export const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'http://127.0.0.1:8000';
+//export const API_BASE_URL = import.meta.env.VITE_SERVER_URL;
+export const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
+// Debug logging to see what's happening
+console.log('=== API Configuration Debug ===');
+console.log('import.meta.env.VITE_SERVER_URL:', import.meta.env.VITE_SERVER_URL);
+console.log('import.meta.env:', import.meta.env);
+console.log('Final API_BASE_URL:', API_BASE_URL);
+console.log('================================');
 
 export interface ApiOptions extends RequestInit {
   requireAuth?: boolean;
@@ -97,6 +104,13 @@ export const api = {
     
   delete: (url: string, options: ApiOptions = {}) => 
     apiRequest(url, { ...options, method: 'DELETE' }),
+    
+  patch: (url: string, data?: any, options: ApiOptions = {}) => 
+    apiRequest(url, { 
+      ...options, 
+      method: 'PATCH', 
+      body: data instanceof FormData ? data : (data ? JSON.stringify(data) : undefined)
+    }),
     
   // For requests that don't require authentication
   public: {

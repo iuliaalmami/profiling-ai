@@ -168,6 +168,53 @@
   }
 }
 
+// Availability column styling
+.availability-tag {
+  &.ant-tag {
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 12px;
+    padding: 4px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    
+    &.ant-tag-green {
+      background-color: #f6ffed;
+      border-color: #b7eb8f;
+      color: #52c41a;
+    }
+    
+    &.ant-tag-orange {
+      background-color: #fff7e6;
+      border-color: #ffd591;
+      color: #fa8c16;
+    }
+    
+    &.ant-tag-default {
+      background-color: #f5f5f5;
+      border-color: #d9d9d9;
+      color: #8c8c8c;
+    }
+  }
+}
+
+// Availability tooltip styling
+.availability-tooltip {
+  .ant-tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+    
+    div {
+      margin-bottom: 4px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
 // Responsive breakpoints to prevent horizontal scrolling (same as ProfileDetails)
 @media (max-width: 1200px) {
   .profile-match-layout {
