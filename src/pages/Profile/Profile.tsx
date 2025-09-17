@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Table,
@@ -79,6 +79,7 @@ const ProfilePage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [showAllExperience, setShowAllExperience] = useState(false);
+  const [showAllEmployeeInfo, setShowAllEmployeeInfo] = useState(false);
   
   // Bulk upload results state (keeping for backward compatibility)
   const [bulkUploadResults, setBulkUploadResults] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -171,6 +172,9 @@ const ProfilePage = () => {
         // Search in name
         const nameMatch = profile.name.toLowerCase().includes(searchLower);
         
+        // Search in cognizant_id
+        const cognizantIdMatch = profile.cognizant_id?.toLowerCase().includes(searchLower) || false;
+        
         // Search in skills
         const skillsMatch = profile.skills?.some(skill => 
           skill.toLowerCase().includes(searchLower)
@@ -179,7 +183,24 @@ const ProfilePage = () => {
         // Search in role (optional)
         const roleMatch = profile.role?.toLowerCase().includes(searchLower) || false;
         
-        return nameMatch || skillsMatch || roleMatch;
+        // Search in employee_data fields
+        const employeeData = profile.employee_data;
+        const employeeDataMatch = employeeData ? (
+          // Search in associate_name
+          (employeeData.associate_name?.toLowerCase().includes(searchLower)) ||
+          // Search in designation (e.g., "Test Analyst")
+          (employeeData.designation?.toLowerCase().includes(searchLower)) ||
+          // Search in city (e.g., "timisoara")
+          (employeeData.city?.toLowerCase().includes(searchLower)) ||
+          // Search in department name
+          (employeeData.dept_name?.toLowerCase().includes(searchLower)) ||
+          // Search in account name
+          (employeeData.account_name?.toLowerCase().includes(searchLower)) ||
+          // Search in project description
+          (employeeData.project_description?.toLowerCase().includes(searchLower))
+        ) : false;
+        
+        return nameMatch || cognizantIdMatch || skillsMatch || roleMatch || employeeDataMatch;
       });
     }
 
@@ -372,6 +393,28 @@ const ProfilePage = () => {
   const getExperiencesToShow = (experiences: any[]) => {
     if (showAllExperience) return experiences;
     return experiences.slice(0, 2); // Get first 2 experiences
+  };
+
+  // Helper function to get employee data fields to show (first 3)
+  const getEmployeeDataFields = (employeeData: EmployeeData) => {
+    const fields = [
+      { label: 'Employee Name:', value: employeeData.associate_name || 'N/A' },
+      { label: 'Grade:', value: employeeData.grade || 'N/A' },
+      { label: 'Designation:', value: employeeData.designation || 'N/A' },
+      { label: 'Department:', value: employeeData.dept_name || 'N/A' },
+      { label: 'Date of Joining:', value: employeeData.date_of_joining 
+        ? new Date(employeeData.date_of_joining).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })
+        : 'N/A' },
+      { label: 'Location:', value: employeeData.city || 'N/A' },
+      { label: 'Billability Status:', value: employeeData.billability_status === 'Y' ? 'Billable' : 'Non-Billable', isTag: true, tagColor: employeeData.billability_status === 'Y' ? 'green' : 'orange' },
+      { label: 'Allocation:', value: employeeData.percentage_allocation || 'N/A' },
+    ];
+    
+    return showAllEmployeeInfo ? fields : fields.slice(0, 3);
   };
 
   const getExperienceLevel = (profile: ProfileData): string => {
@@ -741,11 +784,18 @@ const ProfilePage = () => {
   const columns: ColumnsType<ProfileData> = [
     {
       title: 'Name',
-      dataIndex: 'name',
+      dataIndex: 'employee_data',
       key: 'name',
-      sorter: (a: ProfileData, b: ProfileData) => a.name.localeCompare(b.name),
+      sorter: (a: ProfileData, b: ProfileData) => {
+        const nameA = a.employee_data?.associate_name || a.name || '';
+        const nameB = b.employee_data?.associate_name || b.name || '';
+        return nameA.localeCompare(nameB);
+      },
       sortDirections: ['ascend', 'descend', 'ascend'] as SortOrder[],
-              render: (text: string) => <span className="profile-page__table-name">{text}</span>,
+      render: (employeeData: EmployeeData | null | undefined, record: ProfileData) => {
+        const displayName = employeeData?.associate_name || record.name || 'N/A';
+        return <span className="profile-page__table-name">{displayName}</span>;
+      },
     },
     {
       title: 'Cognizant ID',
@@ -967,7 +1017,7 @@ const ProfilePage = () => {
                 
                 {/* Search Input */}
                 <Input.Search
-                  placeholder="Search by name, skills, or role..."
+                  placeholder="Search by name, cognizant ID, skills, role, designation, city, department..."
                   allowClear
                   enterButton={<SearchOutlined />}
                   size="middle"
@@ -1221,12 +1271,6 @@ const ProfilePage = () => {
             <div className="section">
               <div className="section-title">Basic Information</div>
               <div className="info-grid">
-                <div className="label">Full Name:</div>
-                <div className="value">{selectedProfile.name}</div>
-                
-                <div className="label">Role/Position:</div>
-                <div className="value">{selectedProfile.role || 'No role specified'}</div>
-                
                 <div className="label">Profile ID:</div>
                 <div className="value">{selectedProfile.id}</div>
                 
@@ -1253,42 +1297,33 @@ const ProfilePage = () => {
               <div className="section">
                 <div className="section-title">Employee Information</div>
                 <div className="info-grid">
-                  <div className="label">Employee Name:</div>
-                  <div className="value">{selectedProfile.employee_data.associate_name || 'N/A'}</div>
-                  
-                  <div className="label">Grade:</div>
-                  <div className="value">{selectedProfile.employee_data.grade || 'N/A'}</div>
-                  
-                  <div className="label">Designation:</div>
-                  <div className="value">{selectedProfile.employee_data.designation || 'N/A'}</div>
-                  
-                  <div className="label">Department:</div>
-                  <div className="value">{selectedProfile.employee_data.dept_name || 'N/A'}</div>
-                  
-                  <div className="label">Date of Joining:</div>
-                  <div className="value">
-                    {selectedProfile.employee_data.date_of_joining 
-                      ? new Date(selectedProfile.employee_data.date_of_joining).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })
-                      : 'N/A'}
-                  </div>
-                  
-                  <div className="label">Location:</div>
-                  <div className="value">{selectedProfile.employee_data.city || 'N/A'}</div>
-                  
-                  <div className="label">Billability Status:</div>
-                  <div className="value">
-                    <Tag color={selectedProfile.employee_data.billability_status === 'Y' ? 'green' : 'orange'}>
-                      {selectedProfile.employee_data.billability_status === 'Y' ? 'Billable' : 'Non-Billable'}
-                    </Tag>
-                  </div>
-                  
-                  <div className="label">Allocation:</div>
-                  <div className="value">{selectedProfile.employee_data.percentage_allocation || 'N/A'}</div>
+                  {getEmployeeDataFields(selectedProfile.employee_data).map((field, index) => (
+                    <React.Fragment key={index}>
+                      <div className="label">{field.label}</div>
+                      <div className="value">
+                        {field.isTag ? (
+                          <Tag color={field.tagColor}>{field.value}</Tag>
+                        ) : (
+                          field.value
+                        )}
+                      </div>
+                    </React.Fragment>
+                  ))}
                 </div>
+                {(() => {
+                  const totalFields = 8; // Total number of employee data fields
+                  
+                  if (totalFields <= 3) return null;
+                  
+                  return (
+                    <button 
+                      className="show-more-btn"
+                      onClick={() => setShowAllEmployeeInfo(!showAllEmployeeInfo)}
+                    >
+                      {showAllEmployeeInfo ? 'Show Less' : `Show More (${totalFields - 3} more)`}
+                    </button>
+                  );
+                })()}
               </div>
             )}
 

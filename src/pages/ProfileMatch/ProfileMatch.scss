@@ -57,6 +57,30 @@
           }
         }
         
+        // Compact download button styling
+        .download-btn {
+          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+          border: none !important;
+          border-radius: 6px !important;
+          font-weight: 500 !important;
+          font-size: 12px !important;
+          height: 28px !important;
+          padding: 0 12px !important;
+          box-shadow: 0 2px 8px rgba(14, 165, 233, 0.25) !important;
+          transition: all 0.2s ease !important;
+          
+          &:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35) !important;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+          }
+          
+          &:active {
+            transform: translateY(0) !important;
+            box-shadow: 0 1px 4px rgba(14, 165, 233, 0.25) !important;
+          }
+        }
+        
         // Make the table container display all items naturally
         .ant-table-wrapper {
           flex: 1;

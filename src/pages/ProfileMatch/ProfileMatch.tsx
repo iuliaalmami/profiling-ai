@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, memo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb, Alert, Input, message, Tag, Tooltip } from 'antd';
-import { SearchOutlined, CopyOutlined, ExclamationCircleOutlined, ClockCircleOutlined, CheckCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { SearchOutlined, CopyOutlined, ExclamationCircleOutlined, ClockCircleOutlined, CheckCircleOutlined, QuestionCircleOutlined, DownloadOutlined } from '@ant-design/icons';
 // import { useAuth } from '../../contexts/AuthContext'; // Not needed for this component
 import { api, API_BASE_URL } from '../../utils/api';
 import './ProfileMatch.scss';
@@ -23,6 +23,7 @@ const ProfileMatch = () => {
   const [jobPrompt, setJobPrompt] = useState('');
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   interface MatchData {
     cv_id: string;
@@ -218,6 +219,52 @@ const ProfileMatch = () => {
 
     fetchMatches();
   }, [chatId, prompt, navigate]);
+
+  // Download CSV function
+  const handleDownloadCSV = async () => {
+    if (!chatId || selectedRowKeys.length === 0) {
+      message.warning('Please select profiles to download');
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const response = await api.post(`/matches/${chatId}/download-csv`, selectedRowKeys);
+      
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+
+      // Get the filename from the response headers
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `matches_chat_${chatId}_${selectedRowKeys.length}_profiles.csv`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)/);
+        if (filenameMatch) {
+          filename = decodeURIComponent(filenameMatch[1]);
+        }
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      message.success(`CSV downloaded successfully! (${selectedRowKeys.length} profiles)`);
+    } catch (error) {
+      console.error('Download error:', error);
+      message.error('Failed to download CSV. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   // Filter matches based on search term
   useEffect(() => {
@@ -542,7 +589,7 @@ const ProfileMatch = () => {
             
             {/* Search Section */}
             <Row justify="space-between" align="middle" className="profile-match__search-section">
-              <Col>
+              <Col flex="auto">
                 <Input.Search
                   placeholder="Search by name, skills, role, company, availability, or summary..."
                   allowClear
@@ -559,12 +606,26 @@ const ProfileMatch = () => {
                 </div>
               </Col>
               <Col>
-                {searchTerm && (
-                  <Typography.Text type="secondary">
-                    Showing {filteredMatches.length} of {matches.length} matches
-                    {searchTerm && ` for "${searchTerm}"`}
-                  </Typography.Text>
-                )}
+                <Space>
+                  {selectedRowKeys.length > 0 && (
+                    <Button
+                      className="download-btn"
+                      type="primary"
+                      icon={<DownloadOutlined />}
+                      onClick={handleDownloadCSV}
+                      loading={downloading}
+                      size="small"
+                    >
+                      Download CSV ({selectedRowKeys.length})
+                    </Button>
+                  )}
+                  {searchTerm && (
+                    <Typography.Text type="secondary">
+                      Showing {filteredMatches.length} of {matches.length} matches
+                      {searchTerm && ` for "${searchTerm}"`}
+                    </Typography.Text>
+                  )}
+                </Space>
               </Col>
             </Row>
             
