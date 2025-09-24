@@ -2,7 +2,7 @@
 
 // Get the base API URL from environment variables
 //export const API_BASE_URL = import.meta.env.VITE_SERVER_URL;
-export const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
+export const API_BASE_URL = import.meta.env.VITE_SERVER_URL || 'https://aicv.wittysea-f7fdfd12.eastus.azurecontainerapps.io';
 // Debug logging to see what's happening
 console.log('=== API Configuration Debug ===');
 console.log('import.meta.env.VITE_SERVER_URL:', import.meta.env.VITE_SERVER_URL);

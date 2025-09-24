@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo, memo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb, Alert, Input, message, Tag, Tooltip } from 'antd';
-import { SearchOutlined, CopyOutlined, ExclamationCircleOutlined, ClockCircleOutlined, CheckCircleOutlined, QuestionCircleOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Table, Button, Layout, Typography, Space, Row, Col, Breadcrumb, Alert, Input, message, Tag, Tooltip, DatePicker } from 'antd';
+import { SearchOutlined, CopyOutlined, ExclamationCircleOutlined, ClockCircleOutlined, CheckCircleOutlined, QuestionCircleOutlined, DownloadOutlined, FilterOutlined } from '@ant-design/icons';
+import { Dayjs } from 'dayjs';
 // import { useAuth } from '../../contexts/AuthContext'; // Not needed for this component
 import { api, API_BASE_URL } from '../../utils/api';
 import './ProfileMatch.scss';
@@ -20,6 +21,7 @@ const ProfileMatch = () => {
   const [matches, setMatches] = useState<MatchData[]>([]);
   const [filteredMatches, setFilteredMatches] = useState<MatchData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [availabilityFilterDate, setAvailabilityFilterDate] = useState<Dayjs | null>(null);
   const [jobPrompt, setJobPrompt] = useState('');
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -266,49 +268,81 @@ const ProfileMatch = () => {
     }
   };
 
-  // Filter matches based on search term
+  // Filter matches based on search term and availability
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredMatches(matches);
-      return;
+    let filtered = matches;
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(match => {
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Search in name
+        const nameMatch = match.name?.toLowerCase().includes(searchLower) || false;
+        
+        // Search in role
+        const roleMatch = match.role?.toLowerCase().includes(searchLower) || false;
+        
+        // Search in skills
+        const skillsMatch = match.skills?.some(skill => 
+          skill.toLowerCase().includes(searchLower)
+        ) || false;
+        
+        // Search in experience roles and companies
+        const experienceMatch = match.experience?.some(exp => 
+          exp.role?.toLowerCase().includes(searchLower) ||
+          exp.title?.toLowerCase().includes(searchLower) ||
+          exp.company?.toLowerCase().includes(searchLower)
+        ) || false;
+        
+        // Search in summary
+        const summaryMatch = match.summary?.toLowerCase().includes(searchLower) || false;
+        
+        // Search in availability status and project
+        const availabilityMatch = match.availability ? (
+          match.availability.message?.toLowerCase().includes(searchLower) ||
+          match.availability.current_project?.toLowerCase().includes(searchLower) ||
+          match.availability.status?.toLowerCase().includes(searchLower)
+        ) : false;
+        
+        return nameMatch || roleMatch || skillsMatch || experienceMatch || summaryMatch || availabilityMatch;
+      });
     }
 
-    const filtered = matches.filter(match => {
-      const searchLower = searchTerm.toLowerCase();
-      
-      // Search in name
-      const nameMatch = match.name?.toLowerCase().includes(searchLower) || false;
-      
-      // Search in role
-      const roleMatch = match.role?.toLowerCase().includes(searchLower) || false;
-      
-      // Search in skills
-      const skillsMatch = match.skills?.some(skill => 
-        skill.toLowerCase().includes(searchLower)
-      ) || false;
-      
-      // Search in experience roles and companies
-      const experienceMatch = match.experience?.some(exp => 
-        exp.role?.toLowerCase().includes(searchLower) ||
-        exp.title?.toLowerCase().includes(searchLower) ||
-        exp.company?.toLowerCase().includes(searchLower)
-      ) || false;
-      
-      // Search in summary
-      const summaryMatch = match.summary?.toLowerCase().includes(searchLower) || false;
-      
-      // Search in availability status and project
-      const availabilityMatch = match.availability ? (
-        match.availability.message?.toLowerCase().includes(searchLower) ||
-        match.availability.current_project?.toLowerCase().includes(searchLower) ||
-        match.availability.status?.toLowerCase().includes(searchLower)
-      ) : false;
-      
-      return nameMatch || roleMatch || skillsMatch || experienceMatch || summaryMatch || availabilityMatch;
-    });
+    // Apply availability filter - "Available from" (includes those already available)
+    if (availabilityFilterDate) {
+      filtered = filtered.filter(match => {
+        if (!match.availability) {
+          return false; // Don't include matches with unknown availability
+        }
+
+        const { status, available_from } = match.availability;
+        
+        if (status === 'available_now') {
+          // Available now - always included in "available from" filter
+          return true;
+        } else if (status === 'assigned' && available_from) {
+          // Check if the available_from date is in the past or today
+          const availabilityDate = new Date(available_from);
+          const today = new Date();
+          
+          if (availabilityDate <= today) {
+            // Assignment has ended - treat as available now
+            return true;
+          } else {
+            // Assignment ends in the future - show if available from selected date or earlier
+            const filterDate = availabilityFilterDate.toDate();
+            return availabilityDate <= filterDate;
+          }
+        } else {
+          // Unknown availability - don't include in date-based filters
+          return false;
+        }
+      });
+    }
 
     setFilteredMatches(filtered);
-  }, [searchTerm, matches]);
+  }, [searchTerm, availabilityFilterDate, matches]);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -408,9 +442,27 @@ const ProfileMatch = () => {
             text = 'Available Now';
             break;
           case 'assigned':
-            icon = <ClockCircleOutlined />;
-            color = 'orange';
-            text = available_from ? `From ${available_from}` : 'Assigned';
+            // Check if the available_from date is in the past or today
+            if (available_from) {
+              const availabilityDate = new Date(available_from);
+              const today = new Date();
+              
+              if (availabilityDate <= today) {
+                // Assignment has ended - show as available now
+                icon = <CheckCircleOutlined />;
+                color = 'green';
+                text = 'Available Now';
+              } else {
+                // Assignment ends in the future
+                icon = <ClockCircleOutlined />;
+                color = 'orange';
+                text = `From ${available_from}`;
+              }
+            } else {
+              icon = <ClockCircleOutlined />;
+              color = 'orange';
+              text = 'Assigned';
+            }
             break;
           default:
             icon = <QuestionCircleOutlined />;
@@ -590,18 +642,48 @@ const ProfileMatch = () => {
             {/* Search Section */}
             <Row justify="space-between" align="middle" className="profile-match__search-section">
               <Col flex="auto">
-                <Input.Search
-                  placeholder="Search by name, skills, role, company, availability, or summary..."
-                  allowClear
-                  enterButton={<SearchOutlined />}
-                  size="middle"
-                  onSearch={handleSearch}
-                  onChange={handleSearchChange}
-                  value={searchTerm}
-                />
+                <Space size="middle" style={{ width: '100%' }}>
+                  {/* Availability Filter */}
+                  <Space.Compact>
+                    <span style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      padding: '0 12px', 
+                      background: '#f5f5f5', 
+                      border: '1px solid #d9d9d9',
+                      borderRight: 'none',
+                      borderRadius: '6px 0 0 6px',
+                      fontSize: '14px',
+                      color: '#666',
+                      fontWeight: '500'
+                    }}>
+                      <FilterOutlined style={{ marginRight: '6px' }} />
+                      Available from
+                    </span>
+                    <DatePicker
+                      placeholder="Select date"
+                      value={availabilityFilterDate}
+                      onChange={setAvailabilityFilterDate}
+                      style={{ width: 160 }}
+                      allowClear
+                    />
+                  </Space.Compact>
+                  
+                  {/* Search Input */}
+                  <Input.Search
+                    placeholder="Search by name, skills, role, company, availability, or summary..."
+                    allowClear
+                    enterButton={<SearchOutlined />}
+                    size="middle"
+                    style={{ flex: 1 }}
+                    onSearch={handleSearch}
+                    onChange={handleSearchChange}
+                    value={searchTerm}
+                  />
+                </Space>
                 <div style={{ marginTop: 8 }}>
                   <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                    Try searching for: "banking", "React", "senior developer", "Google", "available now", "bench", etc.
+                    Try searching for: "banking", "Python", "senior developer", "Google", "bench", etc.
                   </Typography.Text>
                 </div>
               </Col>
@@ -619,10 +701,16 @@ const ProfileMatch = () => {
                       Download CSV ({selectedRowKeys.length})
                     </Button>
                   )}
-                  {searchTerm && (
+                  {(searchTerm || availabilityFilterDate) && (
                     <Typography.Text type="secondary">
                       Showing {filteredMatches.length} of {matches.length} matches
                       {searchTerm && ` for "${searchTerm}"`}
+                      {availabilityFilterDate && (
+                        <span>
+                          {searchTerm && ' and '}
+                          available from {availabilityFilterDate.format('MMM DD, YYYY')}
+                        </span>
+                      )}
                     </Typography.Text>
                   )}
                 </Space>

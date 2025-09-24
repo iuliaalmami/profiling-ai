@@ -4,6 +4,7 @@ import UserManagement from '../../components/Admin/UserManagement.tsx';
 import SystemStats from '../../components/Admin/SystemStats.tsx';
 import UserActivityLogs from '../../components/Admin/UserActivityLogs.tsx';
 import AdminActions from '../../components/Admin/AdminActions.tsx';
+import Reports from '../../components/Admin/Reports.tsx';
 import './AdminDashboard.scss';
 
 const AdminDashboard = () => {
@@ -14,6 +15,7 @@ const AdminDashboard = () => {
     { key: '2', label: 'User Management' },
     { key: '3', label: 'Activity Logs' },
     { key: '4', label: 'Actions' },
+    { key: '5', label: 'Reports' },
   ];
 
   return (
@@ -39,6 +41,7 @@ const AdminDashboard = () => {
         {activeKey === '2' && <UserManagement />}
         {activeKey === '3' && <UserActivityLogs />}
         {activeKey === '4' && <AdminActions />}
+        {activeKey === '5' && <Reports />}
       </div>
     </div>
   );

@@ -14,6 +14,15 @@ interface AvailabilityInfo {
   current_project?: string;
 }
 
+interface SkillsData {
+  id: number;
+  skill_category: string;
+  skill_name: string;
+  proficiency: string;
+  last_used: string;
+  experience: string;
+}
+
 interface CVData {
   id: number;
   name: string;
@@ -23,6 +32,7 @@ interface CVData {
   linkedin?: string;
   summary?: string;
   skills?: string[];
+  skills_data?: SkillsData[] | null; // NEW: Skills data from my_skills_data table
   experience?: Array<{
     role: string;
     company: string;
@@ -342,137 +352,120 @@ const ProfileDetails = () => {
           {/* Job Match Section - only show if we have match data */}
           {matchData && (
             <Card className="job-match-card">
-              <div className="job-match-info">
-                <div>
-                  <Typography.Text className="job-title">Job Match:</Typography.Text>
-                  <Typography.Text className="job-role">
-                    {jobPrompt || matchData?.jobTitle || 'Job Position'}
-                  </Typography.Text>
+              <div className="job-match-header">
+                <Typography.Title level={5} className="job-match-title">Job Match</Typography.Title>
+                <div className="match-score-container">
+                  <div className="match-score-label">Match Score</div>
+                  <div className="match-score-value">{matchData.score}%</div>
                 </div>
-                <Typography.Text className="match-score">
-                  Match Score: <span>{matchData.score}%</span>
-                </Typography.Text>
               </div>
-              <Typography.Paragraph className="job-description">
-                The score is based on {cvData.name}'s experience and skills alignment with the job
-                requirements.
-              </Typography.Paragraph>
+              <div className="job-match-content">
+                <Typography.Text className="job-role">
+                  {jobPrompt || matchData?.jobTitle || 'Job Position'}
+                </Typography.Text>
+                <Typography.Paragraph className="job-description">
+                  The score is based on {cvData.name}'s experience and skills alignment with the job
+                  requirements.
+                </Typography.Paragraph>
+              </div>
             </Card>
           )}
 
           {/* Contact Info */}
           <Card className="contact-info-card">
             <Typography.Title level={5}>Contact Information</Typography.Title>
-            <Row gutter={[16, 16]} className="info-grid">
-              <Col xs={24} md={8}>
-                <Typography.Text className="label">📧 Email</Typography.Text>
-                <Typography.Paragraph className="value">
+            <div className="contact-info-grid">
+              <div className="contact-item">
+                <span className="contact-label">Email</span>
+                <span className="contact-value">
                   {cvData.email ? (
                     <Typography.Text copyable style={{ color: '#1890ff', fontWeight: '500' }}>
                       {cvData.email}
                     </Typography.Text>
                   ) : (
-                    <Typography.Text type="secondary">Not provided</Typography.Text>
+                    <span className="not-provided">Not provided</span>
                   )}
-                </Typography.Paragraph>
-              </Col>
-              <Col xs={24} md={8}>
-                <Typography.Text className="label">🆔 Cognizant ID</Typography.Text>
-                <Typography.Paragraph className="value">
+                </span>
+              </div>
+              <div className="contact-item">
+                <span className="contact-label">Cognizant ID</span>
+                <span className="contact-value">
                   {cvData.cognizant_id ? (
-                    <Typography.Text copyable style={{ color: '#52c41a', fontWeight: '600', fontSize: '16px' }}>
+                    <Typography.Text copyable style={{ color: '#52c41a', fontWeight: '600' }}>
                       {cvData.cognizant_id}
                     </Typography.Text>
                   ) : (
-                    <Typography.Text type="secondary">Not provided</Typography.Text>
+                    <span className="not-provided">Not provided</span>
                   )}
-                </Typography.Paragraph>
-              </Col>
-              <Col xs={24} md={8}>
-                <Typography.Text className="label">📱 Phone</Typography.Text>
-                <Typography.Paragraph className="value">
+                </span>
+              </div>
+              <div className="contact-item">
+                <span className="contact-label">Phone</span>
+                <span className="contact-value">
                   {cvData.phone ? (
                     <Typography.Text copyable style={{ color: '#1890ff', fontWeight: '500' }}>
                       {cvData.phone}
                     </Typography.Text>
                   ) : (
-                    <Typography.Text type="secondary">Not provided</Typography.Text>
+                    <span className="not-provided">Not provided</span>
                   )}
-                </Typography.Paragraph>
-              </Col>
-            </Row>
-            <Row gutter={[16, 16]} className="info-grid" style={{ marginTop: '16px' }}>
-              <Col xs={24}>
-                <Typography.Text className="label">🔗 LinkedIn</Typography.Text>
-                <Typography.Paragraph className="value">
+                </span>
+              </div>
+              <div className="contact-item">
+                <span className="contact-label">LinkedIn</span>
+                <span className="contact-value">
                   {cvData.linkedin ? (
                     <Typography.Link href={cvData.linkedin} target="_blank" style={{ fontSize: '14px' }}>
                       {cvData.linkedin}
                     </Typography.Link>
                   ) : (
-                    <Typography.Text type="secondary">Not provided</Typography.Text>
+                    <span className="not-provided">Not provided</span>
                   )}
-                </Typography.Paragraph>
-              </Col>
-            </Row>
+                </span>
+              </div>
+            </div>
           </Card>
 
           {/* Availability Info */}
           {(cvData.availability || matchData?.availability) && (
             <Card className="availability-info-card">
               <Typography.Title level={5}>Availability Status</Typography.Title>
-              <Row gutter={[16, 16]} className="info-grid">
-                <Col xs={24} md={12}>
-                  <Typography.Text className="label">Current Status</Typography.Text>
-                  <Typography.Paragraph className="value">
+              <div className="availability-info-grid">
+                <div className="availability-item">
+                  <span className="availability-label">Status</span>
+                  <span className="availability-value">
                     {(() => {
                       const availability = cvData.availability || matchData?.availability;
                       if (!availability) return 'Unknown';
                       
-                      let icon, color, text;
+                      let text;
                       
                       switch (availability.status) {
                         case 'available_now':
-                          icon = '🟢';
-                          color = '#52c41a';
                           text = 'Available Now';
                           break;
                         case 'assigned':
-                          icon = '🟠';
-                          color = '#fa8c16';
                           text = availability.available_from ? `Available from ${availability.available_from}` : 'Currently Assigned';
                           break;
                         default:
-                          icon = '⚪';
-                          color = '#8c8c8c';
                           text = 'Unknown Status';
                       }
                       
                       return (
-                        <Tag color={color} style={{ fontSize: '14px', padding: '4px 12px' }}>
-                          {icon} {text}
-                        </Tag>
+                        <span className={`status-text status-${availability.status}`}>
+                          {text}
+                        </span>
                       );
                     })()}
-                  </Typography.Paragraph>
-                </Col>
-                <Col xs={24} md={12}>
-                  <Typography.Text className="label">Current Project</Typography.Text>
-                  <Typography.Paragraph className="value">
+                  </span>
+                </div>
+                <div className="availability-item">
+                  <span className="availability-label">Current Project</span>
+                  <span className="availability-value project-text">
                     {(cvData.availability || matchData?.availability)?.current_project || 'Not specified'}
-                  </Typography.Paragraph>
-                </Col>
-              </Row>
-              {(cvData.availability || matchData?.availability)?.message && (
-                <Row>
-                  <Col span={24}>
-                    <Typography.Text className="label">Details</Typography.Text>
-                    <Typography.Paragraph className="value" style={{ fontStyle: 'italic', color: '#666' }}>
-                      {(cvData.availability || matchData?.availability)?.message}
-                    </Typography.Paragraph>
-                  </Col>
-                </Row>
-              )}
+                  </span>
+                </div>
+              </div>
             </Card>
           )}
 
@@ -488,33 +481,96 @@ const ProfileDetails = () => {
           <Row gutter={[16, 16]} className="skills-experience-row">
             <Col xs={24} lg={12}>
               <Card className="expertise-card">
-                <Typography.Title level={5}>Skills</Typography.Title>
-                {cvData.skills && cvData.skills.length > 0 ? (
+                <Typography.Title level={5}>Skills & Expertise</Typography.Title>
+                {(cvData.skills && cvData.skills.length > 0) || (cvData.skills_data && cvData.skills_data.length > 0) ? (
                   <div className="skills-container">
                     <div className="skills-tags">
-                      {(showAllSkills ? cvData.skills : cvData.skills.slice(0, 12)).map((skill, index) => (
-                        <Tag 
-                          key={index} 
-                          className="skill-tag"
-                          color="blue"
-                        >
-                          {skill}
-                        </Tag>
-                      ))}
+                      {(() => {
+                        // Create a set of skill names from database to check for duplicates
+                        const databaseSkillNames = new Set(
+                          cvData.skills_data?.map(skill => skill.skill_name.toLowerCase()) || []
+                        );
+                        
+                        // Filter CV skills to exclude duplicates (case-insensitive)
+                        const uniqueCvSkills = cvData.skills?.filter(skill => 
+                          !databaseSkillNames.has(skill.toLowerCase())
+                        ) || [];
+                        
+                        // Get CV skills to show based on showAllSkills state
+                        const cvSkillsToShow = showAllSkills ? uniqueCvSkills : uniqueCvSkills.slice(0, 6);
+                        
+                        // Get database skills to show based on showAllSkills state
+                        const databaseSkillsToShow = showAllSkills ? 
+                          (cvData.skills_data || []) : 
+                          (cvData.skills_data?.slice(0, 6) || []);
+                        
+                        const allSkills = [
+                          // CV skills (without star icon)
+                          ...cvSkillsToShow.map((skill, index) => (
+                            <Tag 
+                              key={`cv-skill-${index}`} 
+                              className="skill-tag skill-tag-cv"
+                              color="blue"
+                            >
+                              {skill}
+                            </Tag>
+                          )),
+                          // Database skills (with star icon and proficiency)
+                          ...databaseSkillsToShow.map((skill) => {
+                            const formatValue = (value: string | null | undefined) => {
+                              if (!value || value === 'N/A') return 'N/A';
+                              const num = parseFloat(value);
+                              return isNaN(num) ? value : Math.round(num).toString();
+                            };
+
+                            const formattedLastUsed = formatValue(skill.last_used);
+                            const formattedExperience = formatValue(skill.experience);
+
+                            return (
+                              <Tag 
+                                key={`skills-data-${skill.id}`} 
+                                className="skill-tag skill-tag-database" 
+                                color="green"
+                                title={`Last used: ${formattedLastUsed}\nExperience: ${formattedExperience} years`}
+                              >
+                                <span className="skill-icon">★</span>
+                                <span className="skill-name">{skill.skill_name}</span>
+                                <span className="skill-proficiency">{skill.proficiency}</span>
+                              </Tag>
+                            );
+                          })
+                        ];
+                        
+                        return allSkills;
+                      })()}
                     </div>
-                    {cvData.skills.length > 12 && (
-                      <Button 
-                        type="link" 
-                        size="small"
-                        onClick={() => setShowAllSkills(!showAllSkills)}
-                        className="profile-details__export-actions"
-                      >
-                        {showAllSkills 
-                          ? `Show less` 
-                          : `Show ${cvData.skills.length - 12} more skills`
-                        }
-                      </Button>
-                    )}
+                    
+                    {(() => {
+                      const databaseSkillNames = new Set(
+                        cvData.skills_data?.map(skill => skill.skill_name.toLowerCase()) || []
+                      );
+                      const uniqueCvSkills = cvData.skills?.filter(skill => 
+                        !databaseSkillNames.has(skill.toLowerCase())
+                      ) || [];
+                      
+                      const totalUniqueSkills = uniqueCvSkills.length + (cvData.skills_data?.length || 0);
+                      const skillsToShowInitially = Math.min(6, uniqueCvSkills.length) + Math.min(6, cvData.skills_data?.length || 0);
+                      const hiddenSkillsCount = totalUniqueSkills - skillsToShowInitially;
+                      
+                      return hiddenSkillsCount > 0 && (
+                        <Button 
+                          type="link" 
+                          size="small"
+                          onClick={() => setShowAllSkills(!showAllSkills)}
+                          className="profile-details__export-actions"
+                        >
+                          {showAllSkills 
+                            ? `Show less` 
+                            : `Show ${hiddenSkillsCount} more skills`
+                          }
+                        </Button>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <Typography.Paragraph>No skills information available.</Typography.Paragraph>

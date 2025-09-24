@@ -100,104 +100,176 @@
 }
 
 .contact-info-card {
-  border-left: 4px solid #52c41a;
-  
-  .ant-card-head {
-    background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
-  }
+  // Removed border-left and gradient background for cleaner look
   
   .ant-typography-copyable {
     &:hover {
-      background-color: rgba(82, 196, 26, 0.1);
+      background-color: rgba(0, 0, 0, 0.05);
       border-radius: 4px;
       padding: 2px 4px;
     }
   }
+}
+
+.contact-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
   
-  .label {
-    font-weight: 600;
-    color: #52c41a;
-    font-size: 14px;
-  }
-  
-  .value {
-    margin-bottom: 8px;
+  .contact-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     
-    .ant-typography {
-      margin-bottom: 0;
+    .contact-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .contact-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      
+      .not-provided {
+        color: #8c8c8c;
+        font-style: italic;
+      }
     }
   }
 }
 
 .availability-info-card {
-  border-left: 4px solid #1890ff;
+  // Removed border-left and gradient background for cleaner look
+}
+
+.availability-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
   
-  .ant-card-head {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  }
-  
-  .ant-tag {
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 14px;
-    padding: 4px 12px;
-    display: inline-flex;
-    align-items: center;
+  .availability-item {
+    display: flex;
+    flex-direction: column;
     gap: 4px;
     
-    &.ant-tag-green {
-      background-color: #f6ffed;
-      border-color: #b7eb8f;
-      color: #52c41a;
+    .availability-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
-    &.ant-tag-orange {
-      background-color: #fff7e6;
-      border-color: #ffd591;
-      color: #fa8c16;
-    }
-    
-    &.ant-tag-default {
-      background-color: #f5f5f5;
-      border-color: #d9d9d9;
-      color: #8c8c8c;
+    .availability-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
     }
   }
 }
 
-.job-match-info {
+.status-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  display: inline-block;
+  
+  &.status-available_now {
+    background-color: #f0f9ff;
+    border-color: #bfdbfe;
+    color: #1e40af;
+  }
+  
+  &.status-assigned {
+    background-color: #fef3c7;
+    border-color: #fcd34d;
+    color: #92400e;
+  }
+  
+  &.status-unknown {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+    color: #6b7280;
+  }
+}
+
+.project-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  display: inline-block;
+  font-style: italic;
+}
+
+.job-match-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.job-title {
-  font-weight: 600;
-  display: block;
-}
-
-.job-role {
+.job-match-title {
+  margin: 0 !important;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #333;
 }
 
-.match-score {
-  background: #f0f8f0;
-  border: 1px solid #52c41a;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-weight: 500;
+.match-score-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 6px 12px;
+  gap: 8px;
   
-  span {
-    color: #52c41a;
+  .match-score-label {
+    font-size: 12px;
     font-weight: 600;
+    color: #1e40af;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  
+  .match-score-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e40af;
+    line-height: 1;
   }
 }
 
-.job-description {
-  margin: 0;
-  color: #666;
+.job-match-content {
+  .job-role {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 6px;
+    display: block;
+  }
+  
+  .job-description {
+    margin: 0;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.4;
+  }
 }
 
 .info-grid {
@@ -218,12 +290,43 @@
 .skills-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 12px;
 }
 
 .skill-tag {
   // Skill tag styles
+  margin: 2px 2px 2px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  
+  &.skill-tag-cv {
+    // CV skills - standard blue tags
+  }
+  
+  &.skill-tag-database {
+    // Database skills - green tags with star icon and proficiency
+    position: relative;
+    
+    .skill-icon {
+      font-size: 12px;
+      color: #ffd700;
+    }
+    
+    .skill-name {
+      font-weight: 500;
+    }
+    
+    .skill-proficiency {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      margin-left: 4px;
+    }
+  }
 }
 
 // Skills and Experience Row Layout

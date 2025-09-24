@@ -44,6 +44,15 @@ interface EmployeeData {
   percentage_allocation?: string;
 }
 
+interface SkillsData {
+  id: number;
+  skill_category: string;
+  skill_name: string;
+  proficiency: string;
+  last_used: string;
+  experience: string;
+}
+
 interface ProfileData {
   id: string;
   cv_id?: number | string;
@@ -52,6 +61,7 @@ interface ProfileData {
   role?: string;
   last_updated?: string;
   skills?: string[];
+  skills_data?: SkillsData[] | null;
   experience?: Array<{
     role?: string;
     title?: string;
@@ -82,7 +92,7 @@ const ProfilePage = () => {
   const [showAllEmployeeInfo, setShowAllEmployeeInfo] = useState(false);
   
   // Bulk upload results state (keeping for backward compatibility)
-  const [bulkUploadResults, setBulkUploadResults] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [bulkUploadResults] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [showBulkResults, setShowBulkResults] = useState(false);
   
   // Confirmation modal state
@@ -141,6 +151,7 @@ const ProfilePage = () => {
               profile.created_at ||
               new Date().toISOString(),
             skills: profile.skills || [],
+            skills_data: profile.skills_data || null,
             experience: profile.experience || [],
             employee_data: profile.employee_data || null,
           }));
@@ -180,6 +191,12 @@ const ProfilePage = () => {
           skill.toLowerCase().includes(searchLower)
         ) || false;
         
+        // Search in skills_data
+        const skillsDataMatch = profile.skills_data?.some(skill => 
+          skill.skill_name.toLowerCase().includes(searchLower) ||
+          skill.skill_category.toLowerCase().includes(searchLower)
+        ) || false;
+        
         // Search in role (optional)
         const roleMatch = profile.role?.toLowerCase().includes(searchLower) || false;
         
@@ -200,7 +217,7 @@ const ProfilePage = () => {
           (employeeData.project_description?.toLowerCase().includes(searchLower))
         ) : false;
         
-        return nameMatch || cognizantIdMatch || skillsMatch || roleMatch || employeeDataMatch;
+        return nameMatch || cognizantIdMatch || skillsMatch || skillsDataMatch || roleMatch || employeeDataMatch;
       });
     }
 
@@ -281,6 +298,10 @@ const ProfilePage = () => {
           const searchLower = searchTerm.toLowerCase();
           return p.name.toLowerCase().includes(searchLower) ||
                  p.skills?.some(skill => skill.toLowerCase().includes(searchLower)) ||
+                 p.skills_data?.some(skill => 
+                   skill.skill_name.toLowerCase().includes(searchLower) ||
+                   skill.skill_category.toLowerCase().includes(searchLower)
+                 ) ||
                  p.role?.toLowerCase().includes(searchLower);
         }));
         // Clear selection if deleted profile was selected
@@ -336,6 +357,10 @@ const ProfilePage = () => {
           const searchLower = searchTerm.toLowerCase();
           return p.name.toLowerCase().includes(searchLower) ||
                  p.skills?.some(skill => skill.toLowerCase().includes(searchLower)) ||
+                 p.skills_data?.some(skill => 
+                   skill.skill_name.toLowerCase().includes(searchLower) ||
+                   skill.skill_category.toLowerCase().includes(searchLower)
+                 ) ||
                  p.role?.toLowerCase().includes(searchLower);
         }));
         // Clear selection
@@ -382,12 +407,7 @@ const ProfilePage = () => {
     }
   };
 
-  // Helper function to calculate how many skills to show for 2 rows
-  const getSkillsToShow = (skills: string[]) => {
-    if (showAllSkills) return skills;
-    // Assume roughly 4-5 skills per row, so 8-10 for 2 rows
-    return skills.slice(0, 8);
-  };
+  // Removed getSkillsToShow function as it's no longer needed with the new design
 
   // Helper function to get experiences to show (first 2)
   const getExperiencesToShow = (experiences: any[]) => {
@@ -463,7 +483,14 @@ const ProfilePage = () => {
     
     if (employeeData.assignment_end_date) {
       const endDate = new Date(employeeData.assignment_end_date);
-      return endDate.toLocaleDateString();
+      const today = new Date();
+      
+      // Check if the assignment has already ended (past date)
+      if (endDate <= today) {
+        return 'Now';
+      } else {
+        return endDate.toLocaleDateString();
+      }
     }
     
     return 'Unknown';
@@ -1362,23 +1389,88 @@ const ProfilePage = () => {
             {/* Skills */}
             <div className="section">
               <div className="section-title">Skills & Expertise</div>
-              {selectedProfile.skills && selectedProfile.skills.length > 0 ? (
+              {(selectedProfile.skills && selectedProfile.skills.length > 0) || (selectedProfile.skills_data && selectedProfile.skills_data.length > 0) ? (
                 <div>
                   <div className="skills-grid">
-                    {getSkillsToShow(selectedProfile.skills).map((skill, index) => (
-                      <div key={index} className="skill-tag">
-                        {skill}
-                      </div>
-                    ))}
+                    {(() => {
+                      // Create a set of skill names from database to check for duplicates
+                      const databaseSkillNames = new Set(
+                        selectedProfile.skills_data?.map(skill => skill.skill_name.toLowerCase()) || []
+                      );
+                      
+                      // Filter CV skills to exclude duplicates (case-insensitive)
+                      const uniqueCvSkills = selectedProfile.skills?.filter(skill => 
+                        !databaseSkillNames.has(skill.toLowerCase())
+                      ) || [];
+                      
+                      // Get CV skills to show based on showAllSkills state
+                      const cvSkillsToShow = showAllSkills ? uniqueCvSkills : uniqueCvSkills.slice(0, 8);
+                      
+                      // Get database skills to show based on showAllSkills state
+                      const databaseSkillsToShow = showAllSkills ? 
+                        (selectedProfile.skills_data || []) : 
+                        (selectedProfile.skills_data?.slice(0, 8) || []);
+                      
+                      // Combine CV skills and database skills
+                      const allSkills = [
+                        // CV skills (without duplicates, respecting show/hide state)
+                        ...cvSkillsToShow.map((skill, index) => (
+                          <div key={`cv-skill-${index}`} className="skill-tag skill-tag-cv">
+                            {skill}
+                          </div>
+                        )),
+                        // Database skills (respecting show/hide state)
+                        ...databaseSkillsToShow.map((skill) => {
+                          // Format values to remove decimals
+                          const formatValue = (value: string | null | undefined) => {
+                            if (!value || value === 'N/A') return 'N/A';
+                            const num = parseFloat(value);
+                            return isNaN(num) ? value : Math.round(num).toString();
+                          };
+
+                          const formattedLastUsed = formatValue(skill.last_used);
+                          const formattedExperience = formatValue(skill.experience);
+
+                          return (
+                            <div key={`skills-data-${skill.id}`} className="skill-tag skill-tag-database" data-tooltip={`Last used: ${formattedLastUsed}\nExperience: ${formattedExperience}`}>
+                              <div className="skill-icon">
+                                <span className="star-icon">★</span>
+                              </div>
+                              <span className="skill-name">{skill.skill_name}</span>
+                              <div className={`skill-proficiency skill-proficiency-${skill.proficiency?.toLowerCase().replace(/\s+/g, '-')}`}>
+                                {skill.proficiency}
+                              </div>
+                            </div>
+                          );
+                        })
+                      ];
+                      
+                      return allSkills;
+                    })()}
                   </div>
-                  {selectedProfile.skills.length > 8 && (
-                    <button 
-                      className="show-more-btn"
-                      onClick={() => setShowAllSkills(!showAllSkills)}
-                    >
-                      {showAllSkills ? `Show Less` : `Show More (${selectedProfile.skills.length - 8} more)`}
-                    </button>
-                  )}
+                  
+                  {/* Show more button for all skills */}
+                  {(() => {
+                    const databaseSkillNames = new Set(
+                      selectedProfile.skills_data?.map(skill => skill.skill_name.toLowerCase()) || []
+                    );
+                    const uniqueCvSkills = selectedProfile.skills?.filter(skill => 
+                      !databaseSkillNames.has(skill.toLowerCase())
+                    ) || [];
+                    
+                    const totalUniqueSkills = uniqueCvSkills.length + (selectedProfile.skills_data?.length || 0);
+                    const skillsToShowInitially = Math.min(8, uniqueCvSkills.length) + Math.min(8, selectedProfile.skills_data?.length || 0);
+                    const hiddenSkillsCount = totalUniqueSkills - skillsToShowInitially;
+                    
+                    return hiddenSkillsCount > 0 && (
+                      <button 
+                        className="show-more-btn"
+                        onClick={() => setShowAllSkills(!showAllSkills)}
+                      >
+                        {showAllSkills ? `Show Less` : `Show More (${hiddenSkillsCount} more)`}
+                      </button>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div>No skills listed for this profile</div>
@@ -1579,23 +1671,39 @@ const ProfilePage = () => {
             
             <div className="confirmation-fields">
               <div className="field-group">
-                <Typography.Text strong>Name:</Typography.Text>
+                <Typography.Text strong>
+                  Name: <span style={{ color: 'red' }}>*</span>
+                </Typography.Text>
                 <Input
                   value={extractedData.name}
                   onChange={(e) => setExtractedData(prev => prev ? { ...prev, name: e.target.value } : null)}
                   placeholder="Enter name"
                   style={{ marginTop: 8 }}
+                  status={!extractedData.name.trim() ? 'error' : ''}
                 />
+                {!extractedData.name.trim() && (
+                  <Typography.Text type="danger" style={{ fontSize: '12px', marginTop: 4, display: 'block' }}>
+                    Name is required
+                  </Typography.Text>
+                )}
               </div>
               
               <div className="field-group">
-                <Typography.Text strong>Cognizant ID:</Typography.Text>
+                <Typography.Text strong>
+                  Cognizant ID: <span style={{ color: 'red' }}>*</span>
+                </Typography.Text>
                 <Input
                   value={extractedData.cognizant_id}
                   onChange={(e) => setExtractedData(prev => prev ? { ...prev, cognizant_id: e.target.value } : null)}
                   placeholder="Enter Cognizant ID"
                   style={{ marginTop: 8 }}
+                  status={!extractedData.cognizant_id.trim() ? 'error' : ''}
                 />
+                {!extractedData.cognizant_id.trim() && (
+                  <Typography.Text type="danger" style={{ fontSize: '12px', marginTop: 4, display: 'block' }}>
+                    Cognizant ID is required
+                  </Typography.Text>
+                )}
               </div>
             </div>
             
@@ -1610,6 +1718,7 @@ const ProfilePage = () => {
                     name: extractedData.name,
                     cognizant_id: extractedData.cognizant_id
                   })}
+                  disabled={!extractedData.name.trim() || !extractedData.cognizant_id.trim()}
                 >
                   Done
                 </Button>
@@ -1661,50 +1770,74 @@ const ProfilePage = () => {
                     ),
                   },
                   {
-                    title: 'Name',
+                    title: (
+                      <span>
+                        Name <span style={{ color: 'red' }}>*</span>
+                      </span>
+                    ),
                     dataIndex: 'name',
                     key: 'name',
                     width: 150,
                     render: (name: string, record: any) => (
                       record.status === 'success' ? (
-                        <Input
-                          value={name}
-                          onChange={(e) => {
-                            const newResults = bulkExtractedData.results.map(r => 
-                              r.filename === record.filename 
-                                ? { ...r, name: e.target.value }
-                                : r
-                            );
-                            setBulkExtractedData(prev => prev ? { ...prev, results: newResults } : null);
-                          }}
-                          placeholder="Enter name"
-                          size="small"
-                        />
+                        <div>
+                          <Input
+                            value={name}
+                            onChange={(e) => {
+                              const newResults = bulkExtractedData.results.map(r => 
+                                r.filename === record.filename 
+                                  ? { ...r, name: e.target.value }
+                                  : r
+                              );
+                              setBulkExtractedData(prev => prev ? { ...prev, results: newResults } : null);
+                            }}
+                            placeholder="Enter name"
+                            size="small"
+                            status={!name.trim() ? 'error' : ''}
+                          />
+                          {!name.trim() && (
+                            <Typography.Text type="danger" style={{ fontSize: '10px', display: 'block', marginTop: 2 }}>
+                              Required
+                            </Typography.Text>
+                          )}
+                        </div>
                       ) : (
                         <Typography.Text type="secondary">-</Typography.Text>
                       )
                     ),
                   },
                   {
-                    title: 'Cognizant ID',
+                    title: (
+                      <span>
+                        Cognizant ID <span style={{ color: 'red' }}>*</span>
+                      </span>
+                    ),
                     dataIndex: 'cognizant_id',
                     key: 'cognizant_id',
                     width: 150,
                     render: (cognizantId: string, record: any) => (
                       record.status === 'success' ? (
-                        <Input
-                          value={cognizantId}
-                          onChange={(e) => {
-                            const newResults = bulkExtractedData.results.map(r => 
-                              r.filename === record.filename 
-                                ? { ...r, cognizant_id: e.target.value }
-                                : r
-                            );
-                            setBulkExtractedData(prev => prev ? { ...prev, results: newResults } : null);
-                          }}
-                          placeholder="Enter Cognizant ID"
-                          size="small"
-                        />
+                        <div>
+                          <Input
+                            value={cognizantId}
+                            onChange={(e) => {
+                              const newResults = bulkExtractedData.results.map(r => 
+                                r.filename === record.filename 
+                                  ? { ...r, cognizant_id: e.target.value }
+                                  : r
+                              );
+                              setBulkExtractedData(prev => prev ? { ...prev, results: newResults } : null);
+                            }}
+                            placeholder="Enter Cognizant ID"
+                            size="small"
+                            status={!cognizantId.trim() ? 'error' : ''}
+                          />
+                          {!cognizantId.trim() && (
+                            <Typography.Text type="danger" style={{ fontSize: '10px', display: 'block', marginTop: 2 }}>
+                              Required
+                            </Typography.Text>
+                          )}
+                        </div>
                       ) : (
                         <Typography.Text type="secondary">-</Typography.Text>
                       )
@@ -1753,7 +1886,13 @@ const ProfilePage = () => {
                     }));
                     handleBulkConfirmationConfirm(confirmedData);
                   }}
-                  disabled={bulkExtractedData.summary.successful_uploads === 0}
+                  disabled={
+                    bulkExtractedData.summary.successful_uploads === 0 ||
+                    bulkExtractedData.results.some(r => 
+                      r.status === 'success' && 
+                      (!r.name.trim() || !r.cognizant_id.trim())
+                    )
+                  }
                 >
                   Confirm All ({bulkExtractedData.summary.successful_uploads})
                 </Button>
