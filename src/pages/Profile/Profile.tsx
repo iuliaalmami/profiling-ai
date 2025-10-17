@@ -72,7 +72,7 @@ interface ProfileData {
 }
 
 const ProfilePage = () => {
-  const { } = useAuth();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
   const [filteredProfiles, setFilteredProfiles] = useState<ProfileData[]>([]);
@@ -965,13 +965,15 @@ const ProfilePage = () => {
           >
             aiChat
           </Button>
-          <Button
-            type="link"
-            className="remove-link"
-            onClick={() => handleRemoveProfile(record)}
-          >
-            Remove
-          </Button>
+          {isAdmin && (
+            <Button
+              type="link"
+              className="remove-link"
+              onClick={() => handleRemoveProfile(record)}
+            >
+              Remove
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -994,7 +996,7 @@ const ProfilePage = () => {
                 <Button type="primary" onClick={handleAddProfile}>
                   Add Profile
                 </Button>
-                {selectedRowKeys.length > 0 && (
+                {isAdmin && selectedRowKeys.length > 0 && (
                   <Button
                     danger
                     onClick={handleBatchDelete}
@@ -1076,7 +1078,7 @@ const ProfilePage = () => {
             dataSource={filteredProfiles}
             columns={columns}
             rowKey="id"
-            rowSelection={rowSelection}
+            rowSelection={isAdmin ? rowSelection : undefined}
             pagination={{
               current: currentPage,
               pageSize: pageSize,

@@ -341,6 +341,7 @@ const AdminActions: React.FC = () => {
       title: 'Grade',
       dataIndex: 'grade',
       key: 'grade',
+      width: 80, // 50% smaller
     },
     {
       title: 'Designation',
@@ -367,6 +368,7 @@ const AdminActions: React.FC = () => {
       title: 'Billability',
       dataIndex: 'billability_status',
       key: 'billability_status',
+      width: 100, // 75% smaller
     },
     {
       title: 'City',
@@ -549,7 +551,6 @@ const AdminActions: React.FC = () => {
                 dataSource={employeeData}
                 rowKey="id"
                 pagination={{ pageSize: 20 }}
-                scroll={{ x: 1200 }}
                 size="small"
               />
             </Spin>
