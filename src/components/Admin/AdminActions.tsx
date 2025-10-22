@@ -51,6 +51,24 @@ interface MySkillsData {
   created_at: string;
 }
 
+interface StaffingData {
+  id: number;
+  upload_id: number;
+  employee_id: string;
+  name: string;
+  community: string;
+  technology: string;
+  location: string;
+  reserved: string;
+  client: string;
+  reserved_start_date: string;
+  tentative_billable_date: string;
+  delivery_director: string;
+  comments: string;
+  previous_project: string;
+  created_at: string;
+}
+
 const AdminActions: React.FC = () => {
   const [activeTab, setActiveTab] = useState('availability');
   const [uploading, setUploading] = useState(false);
@@ -59,6 +77,7 @@ const AdminActions: React.FC = () => {
   const [uploadHistory, setUploadHistory] = useState<UploadHistory[]>([]);
   const [employeeData, setEmployeeData] = useState<EmployeeData[]>([]);
   const [mySkillsData, setMySkillsData] = useState<MySkillsData[]>([]);
+  const [staffingData, setStaffingData] = useState<StaffingData[]>([]);
   const [selectedUploadId, setSelectedUploadId] = useState<number | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -116,6 +135,22 @@ const AdminActions: React.FC = () => {
     }
   };
 
+  const loadStaffingData = async (uploadId?: number) => {
+    setLoadingData(true);
+    try {
+      const url = uploadId ? `/admin/staffing/data?upload_id=${uploadId}` : '/admin/staffing/data';
+      const response = await api.get(url);
+      const data = await response.json();
+      setStaffingData(data.data);
+      setSelectedUploadId(uploadId || null);
+    } catch (error) {
+      console.error('Error loading Staffing Solutions data:', error);
+      message.error('Failed to load Staffing Solutions data');
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
   const handleFileSelection = (file: File) => {
     setPendingFile(file);
     setShowConfirmModal(true);
@@ -136,7 +171,12 @@ const AdminActions: React.FC = () => {
       console.log('Uploading file:', pendingFile.name, 'Size:', pendingFile.size);
 
       // Determine which endpoint to use based on active tab
-      const endpoint = activeTab === 'myskills' ? '/admin/myskills/upload' : '/admin/excel/upload';
+      let endpoint = '/admin/excel/upload';
+      if (activeTab === 'myskills') {
+        endpoint = '/admin/myskills/upload';
+      } else if (activeTab === 'staffing') {
+        endpoint = '/admin/staffing/upload';
+      }
       const response = await api.post(endpoint, formData);
 
       // Check if the response is successful
@@ -168,6 +208,8 @@ const AdminActions: React.FC = () => {
         // Load appropriate data based on tab
         if (activeTab === 'myskills') {
           loadMySkillsData(result.upload_id);
+        } else if (activeTab === 'staffing') {
+          loadStaffingData(result.upload_id);
         } else {
           loadEmployeeData(result.upload_id);
         }
@@ -314,6 +356,8 @@ const AdminActions: React.FC = () => {
             // Load data based on current active tab
             if (activeTab === 'myskills') {
               loadMySkillsData(record.id);
+            } else if (activeTab === 'staffing') {
+              loadStaffingData(record.id);
             } else {
               loadEmployeeData(record.id);
             }
@@ -407,6 +451,72 @@ const AdminActions: React.FC = () => {
       title: 'Experience',
       dataIndex: 'experience',
       key: 'experience',
+    },
+  ];
+
+  const staffingColumns = [
+    {
+      title: 'ID',
+      dataIndex: 'employee_id',
+      key: 'employee_id',
+      width: 80,
+    },
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: 'Community',
+      dataIndex: 'community',
+      key: 'community',
+    },
+    {
+      title: 'Technology',
+      dataIndex: 'technology',
+      key: 'technology',
+    },
+    {
+      title: 'Location',
+      dataIndex: 'location',
+      key: 'location',
+    },
+    {
+      title: 'Reserved',
+      dataIndex: 'reserved',
+      key: 'reserved',
+    },
+    {
+      title: 'Client',
+      dataIndex: 'client',
+      key: 'client',
+    },
+    {
+      title: 'Reserved Start Date',
+      dataIndex: 'reserved_start_date',
+      key: 'reserved_start_date',
+    },
+    {
+      title: 'Tentative Billable Date',
+      dataIndex: 'tentative_billable_date',
+      key: 'tentative_billable_date',
+    },
+    {
+      title: 'Delivery Director',
+      dataIndex: 'delivery_director',
+      key: 'delivery_director',
+    },
+    {
+      title: 'Comments',
+      dataIndex: 'comments',
+      key: 'comments',
+      ellipsis: true,
+    },
+    {
+      title: 'Previous Project',
+      dataIndex: 'previous_project',
+      key: 'previous_project',
+      ellipsis: true,
     },
   ];
 
@@ -729,6 +839,161 @@ const AdminActions: React.FC = () => {
     </div>
   );
 
+  const StaffingContent: React.FC = () => (
+    <div className="admin-actions-content">
+      {/* Upload Section */}
+      <Card title="Upload Staffing Solutions Excel File" className="upload-card">
+        <div className="upload-section">
+          <Upload {...uploadProps}>
+            <Button 
+              icon={<UploadOutlined />} 
+              size="large"
+              loading={uploading}
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading...' : 'Click to Upload Staffing Solutions Excel File'}
+            </Button>
+          </Upload>
+          
+          {/* Error Display */}
+          {uploadError && (
+            <div style={{ 
+              background: '#fff2f0', 
+              border: '1px solid #ffccc7', 
+              borderRadius: '6px', 
+              padding: '16px',
+              marginTop: '12px',
+              position: 'relative'
+            }}>
+              <Button
+                type="text"
+                size="small"
+                icon={<CloseOutlined />}
+                onClick={clearUploadError}
+                style={{
+                  position: 'absolute',
+                  top: '8px',
+                  right: '8px',
+                  color: '#ff4d4f',
+                  padding: '4px',
+                  minWidth: 'auto',
+                  height: 'auto'
+                }}
+              />
+              <div style={{ 
+                whiteSpace: 'pre-line',
+                fontSize: '13px',
+                lineHeight: '1.5',
+                paddingRight: '24px'
+              }}>
+                <Text type="danger">
+                  {uploadError}
+                </Text>
+              </div>
+            </div>
+          )}
+          <div className="upload-info">
+            <div style={{ 
+              background: '#f6ffed', 
+              border: '1px solid #b7eb8f', 
+              borderRadius: '6px', 
+              padding: '12px',
+              marginBottom: '12px'
+            }}>
+              <Text type="success">
+                <strong>📋 Required Excel Format:</strong>
+              </Text>
+              <div style={{ marginTop: '8px' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  <strong>Sheet Name:</strong> StaffingSolutions
+                </Text>
+              </div>
+              <div style={{ marginTop: '8px' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  <strong>Column Headers:</strong> ID (do not edit), Name (do not edit), Community (do not edit), 
+                  Technology (do not edit), Location (do not edit, RESERVED, CLIENT, RESERVED START DATE, 
+                  TENTATIVE BILLABLE DATE, DELIVERY DIRECTOR, COMMENTS, PREVIOUS PROJECT
+                </Text>
+              </div>
+            </div>
+            <Text type="warning" style={{ marginTop: '8px', display: 'block' }}>
+              <strong>⚠️ Warning:</strong> This will completely replace all existing Staffing Solutions data with the new file data.
+            </Text>
+          </div>
+        </div>
+      </Card>
+
+      <Divider />
+
+      {/* Upload History Section */}
+      <Card 
+        title={
+          <Space>
+            <HistoryOutlined />
+            Upload History
+            {uploadHistory.length > 3 && (
+              <Tag color="blue">
+                {showAllHistory ? 'Showing 10' : 'Showing 3'} of {uploadHistory.length}
+              </Tag>
+            )}
+          </Space>
+        }
+        extra={
+          <Space>
+            {uploadHistory.length > 3 && (
+              <Button 
+                onClick={toggleHistoryView}
+                size="small"
+                type={showAllHistory ? 'default' : 'primary'}
+              >
+                {showAllHistory ? 'Show Less' : 'Show More'}
+              </Button>
+            )}
+            <Button onClick={loadUploadHistory} loading={loadingHistory}>
+              Refresh
+            </Button>
+          </Space>
+        }
+      >
+        <Spin spinning={loadingHistory}>
+          <Table
+            columns={historyColumns}
+            dataSource={getDisplayedHistory()}
+            rowKey="id"
+            pagination={false}
+            size="small"
+          />
+        </Spin>
+      </Card>
+
+      {/* Staffing Data Section */}
+      {staffingData.length > 0 && (
+        <>
+          <Divider />
+          <Card 
+            title={`Staffing Solutions Data ${selectedUploadId ? `(Upload #${selectedUploadId})` : ''}`}
+            extra={
+              <Button onClick={() => loadStaffingData()} loading={loadingData}>
+                View All Data
+              </Button>
+            }
+          >
+            <Spin spinning={loadingData}>
+              <Table
+                columns={staffingColumns}
+                dataSource={staffingData}
+                rowKey="id"
+                pagination={{ pageSize: 20 }}
+                scroll={{ x: 1500 }}
+                size="small"
+              />
+            </Spin>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+
   const tabItems = [
     {
       key: 'availability',
@@ -739,6 +1004,16 @@ const AdminActions: React.FC = () => {
         </Space>
       ),
       children: <AvailabilityContent />,
+    },
+    {
+      key: 'staffing',
+      label: (
+        <Space>
+          <FileExcelOutlined />
+          Staffing Solution
+        </Space>
+      ),
+      children: <StaffingContent />,
     },
     {
       key: 'myskills',
@@ -773,7 +1048,7 @@ const AdminActions: React.FC = () => {
         title={
           <Space>
             <ExclamationCircleOutlined style={{ color: '#faad14' }} />
-            Confirm {activeTab === 'myskills' ? 'MySkills' : 'Excel'} Upload
+            Confirm {activeTab === 'myskills' ? 'MySkills' : activeTab === 'staffing' ? 'Staffing Solutions' : 'Excel'} Upload
           </Space>
         }
         open={showConfirmModal}
@@ -814,6 +1089,11 @@ const AdminActions: React.FC = () => {
                 <li>Delete ALL existing MySkills data</li>
                 <li>Replace it with endorsed skills data from the uploaded file</li>
                 <li>Only process employees with Cognizant IDs in the CVs database</li>
+              </>
+            ) : activeTab === 'staffing' ? (
+              <>
+                <li>Delete ALL existing Staffing Solutions data</li>
+                <li>Replace it with data from the uploaded file</li>
               </>
             ) : (
               <>

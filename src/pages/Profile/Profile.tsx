@@ -18,7 +18,7 @@ import {
   DatePicker,
 } from 'antd';
 import type { ColumnsType, SortOrder } from 'antd/es/table/interface';
-import { InboxOutlined, SearchOutlined, ClockCircleOutlined, ExclamationCircleOutlined, CheckCircleOutlined, QuestionCircleOutlined, FilterOutlined } from '@ant-design/icons';
+import { InboxOutlined, SearchOutlined, ClockCircleOutlined, ExclamationCircleOutlined, CheckCircleOutlined, QuestionCircleOutlined, FilterOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Dayjs } from 'dayjs';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, API_BASE_URL } from '../../utils/api';
@@ -53,6 +53,21 @@ interface SkillsData {
   experience: string;
 }
 
+interface StaffingData {
+  employee_id: string;
+  name: string;
+  community: string;
+  technology: string;
+  location: string;
+  reserved: string;
+  client: string;
+  reserved_start_date: string;
+  tentative_billable_date: string;
+  delivery_director: string;
+  comments: string;
+  previous_project: string;
+}
+
 interface ProfileData {
   id: string;
   cv_id?: number | string;
@@ -69,6 +84,7 @@ interface ProfileData {
     duration?: string;
   }>;
   employee_data?: EmployeeData | null;
+  staffing_data?: StaffingData | null;
 }
 
 const ProfilePage = () => {
@@ -90,6 +106,8 @@ const ProfilePage = () => {
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [showAllExperience, setShowAllExperience] = useState(false);
   const [showAllEmployeeInfo, setShowAllEmployeeInfo] = useState(false);
+  const [isStaffingModalOpen, setIsStaffingModalOpen] = useState(false);
+  const [selectedStaffingData, setSelectedStaffingData] = useState<StaffingData | null>(null);
   
   // Bulk upload results state (keeping for backward compatibility)
   const [bulkUploadResults] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -154,6 +172,7 @@ const ProfilePage = () => {
             skills_data: profile.skills_data || null,
             experience: profile.experience || [],
             employee_data: profile.employee_data || null,
+            staffing_data: profile.staffing_data || null,
           }));
 
           setProfiles(processedProfiles);
@@ -224,7 +243,7 @@ const ProfilePage = () => {
     // Apply availability filter - "Available from" (includes those already available)
     if (availabilityFilterDate) {
       filtered = filtered.filter(profile => {
-        const availability = formatAvailability(profile.employee_data || null);
+        const availability = formatAvailability(profile.employee_data || null, profile.staffing_data || null);
         
         if (availability === 'Now') {
           // Available now - always included in "available from" filter
@@ -469,8 +488,48 @@ const ProfilePage = () => {
     return updateDate < threeMonthsAgo;
   };
 
+  // Helper function to format date as MM/DD/YYYY
+  const formatDate = (dateString: string): string => {
+    if (!dateString || dateString.trim() === '') {
+      return '';
+    }
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return dateString; // Return original if parsing fails
+      }
+      
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${month}/${day}/${year}`;
+    } catch {
+      return dateString; // Return original if any error
+    }
+  };
+
   // Helper function to format availability display
-  const formatAvailability = (employeeData: EmployeeData | null): string => {
+  const formatAvailability = (employeeData: EmployeeData | null, staffingData: StaffingData | null): string => {
+    // First check staffing_data for availability status
+    if (staffingData && staffingData.reserved) {
+      const reserved = staffingData.reserved.trim();
+      
+      if (reserved === 'NO') {
+        return 'Now';
+      } else if (reserved === 'Tentatively') {
+        return 'Tentatively Reserved';
+      } else if (reserved === 'YES') {
+        return 'Reserved';
+      } else if (reserved === 'Future Billable') {
+        return 'Future Billable';
+      } else if (reserved === 'Maternity' || reserved === 'EXIT') {
+        return 'Unavailable';
+      }
+    }
+    
+    // Fall back to employee_data if no staffing_data
     if (!employeeData) {
       return 'Unknown';
     }
@@ -866,10 +925,24 @@ const ProfilePage = () => {
       title: 'Availability',
       dataIndex: 'employee_data',
       key: 'availability',
-      render: (employeeData: EmployeeData | null) => {
-        const availability = formatAvailability(employeeData);
+      render: (employeeData: EmployeeData | null, record: ProfileData) => {
+        const staffingData = record.staffing_data || null;
+        const availability = formatAvailability(employeeData, staffingData);
         const isAvailableNow = availability === 'Now';
         const isUnknown = availability === 'Unknown';
+        const isTentativelyReserved = availability === 'Tentatively Reserved';
+        const isReserved = availability === 'Reserved';
+        const isFutureBillable = availability === 'Future Billable';
+        const isUnavailable = availability === 'Unavailable';
+        
+        // Show info icon for Tentatively, YES, Future Billable, Maternity, or EXIT statuses
+        const showInfoIcon = staffingData && (
+          staffingData.reserved === 'Tentatively' || 
+          staffingData.reserved === 'YES' || 
+          staffingData.reserved === 'Future Billable' ||
+          staffingData.reserved === 'Maternity' ||
+          staffingData.reserved === 'EXIT'
+        );
         
         let icon, color, text, className, tooltipTitle;
         
@@ -878,7 +951,39 @@ const ProfilePage = () => {
           color = 'green';
           text = 'Available Now';
           className = 'availability-tag availability-tag--now';
-          tooltipTitle = employeeData?.project_description ? `Current Project: ${employeeData.project_description}` : 'Available for new assignments';
+          tooltipTitle = staffingData?.client 
+            ? `Client: ${staffingData.client}` 
+            : (employeeData?.project_description ? `Current Project: ${employeeData.project_description}` : 'Available for new assignments');
+        } else if (isTentativelyReserved) {
+          icon = <ExclamationCircleOutlined />;
+          color = 'orange';
+          text = 'Tentatively Reserved';
+          className = 'availability-tag availability-tag--tentative';
+          tooltipTitle = staffingData?.client ? `Tentatively reserved for: ${staffingData.client}` : 'Tentatively reserved';
+        } else if (isReserved) {
+          icon = <ExclamationCircleOutlined />;
+          color = 'blue';
+          text = 'Reserved';
+          className = 'availability-tag availability-tag--reserved';
+          tooltipTitle = staffingData?.client ? `Reserved for: ${staffingData.client}` : 'Reserved for client';
+        } else if (isFutureBillable) {
+          icon = <ExclamationCircleOutlined />;
+          color = 'red';
+          text = 'Future Billable';
+          className = 'availability-tag availability-tag--future-billable';
+          tooltipTitle = staffingData?.tentative_billable_date 
+            ? `Future billable from ${formatDate(staffingData.tentative_billable_date)}` 
+            : 'Future billable';
+        } else if (isUnavailable) {
+          icon = <ExclamationCircleOutlined />;
+          color = 'default';
+          text = 'Unavailable';
+          className = 'availability-tag availability-tag--unavailable';
+          tooltipTitle = staffingData?.reserved === 'Maternity' 
+            ? 'On maternity leave' 
+            : staffingData?.reserved === 'EXIT' 
+              ? 'Exiting organization' 
+              : 'Currently unavailable';
         } else if (isUnknown) {
           icon = <QuestionCircleOutlined />;
           color = 'default';
@@ -888,21 +993,38 @@ const ProfilePage = () => {
         } else {
           icon = <ClockCircleOutlined />;
           color = 'orange';
-          text = `Available ${availability}`;
+          text = availability;
           className = 'availability-tag availability-tag--future';
-          tooltipTitle = employeeData?.project_description ? `Current Project: ${employeeData.project_description}` : `Available from ${availability}`;
+          tooltipTitle = employeeData?.project_description ? `Current Project: ${employeeData.project_description}` : `${availability}`;
         }
         
         return (
-          <Tooltip 
-            title={tooltipTitle}
-            placement="top"
-            className="availability-tooltip"
-          >
-            <Tag icon={icon} color={color} className={className}>
-              {text}
-            </Tag>
-          </Tooltip>
+          <Space size="small">
+            <Tooltip 
+              title={tooltipTitle}
+              placement="top"
+              className="availability-tooltip"
+            >
+              <Tag icon={icon} color={color} className={className}>
+                {text}
+              </Tag>
+            </Tooltip>
+            {showInfoIcon && (
+              <Tooltip title="View staffing details">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<InfoCircleOutlined style={{ color: '#1890ff' }} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedStaffingData(staffingData);
+                    setIsStaffingModalOpen(true);
+                  }}
+                  style={{ padding: '0 4px' }}
+                />
+              </Tooltip>
+            )}
+          </Space>
         );
       },
     },
@@ -1947,6 +2069,123 @@ const ProfilePage = () => {
                 </Button>
               </Space>
             </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Staffing Data Details Modal */}
+      <Modal
+        title="Staffing Solution Details"
+        open={isStaffingModalOpen}
+        onCancel={() => {
+          setIsStaffingModalOpen(false);
+          setSelectedStaffingData(null);
+        }}
+        footer={[
+          <Button key="close" type="primary" onClick={() => {
+            setIsStaffingModalOpen(false);
+            setSelectedStaffingData(null);
+          }}>
+            Close
+          </Button>
+        ]}
+        width={700}
+        className="staffing-details-modal"
+      >
+        {selectedStaffingData && (
+          <div className="staffing-details-content">
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Employee ID:</Typography.Text>
+                  <Typography.Text>{selectedStaffingData.employee_id}</Typography.Text>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Name:</Typography.Text>
+                  <Typography.Text>{selectedStaffingData.name}</Typography.Text>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Community:</Typography.Text>
+                  <Typography.Text>{selectedStaffingData.community || 'N/A'}</Typography.Text>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Technology:</Typography.Text>
+                  <Typography.Text>{selectedStaffingData.technology || 'N/A'}</Typography.Text>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Location:</Typography.Text>
+                  <Typography.Text>{selectedStaffingData.location || 'N/A'}</Typography.Text>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Reserved Status:</Typography.Text>
+                  <Tag color={
+                    selectedStaffingData.reserved === 'NO' ? 'green' :
+                    selectedStaffingData.reserved === 'Tentatively' ? 'orange' :
+                    selectedStaffingData.reserved === 'YES' ? 'blue' :
+                    selectedStaffingData.reserved === 'Future Billable' ? 'red' :
+                    selectedStaffingData.reserved === 'Maternity' ? 'default' :
+                    selectedStaffingData.reserved === 'EXIT' ? 'default' :
+                    'default'
+                  }>
+                    {selectedStaffingData.reserved}
+                  </Tag>
+                </div>
+              </Col>
+              <Col span={24}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Client:</Typography.Text>
+                  <Typography.Text>{selectedStaffingData.client || 'N/A'}</Typography.Text>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Reserved Start Date:</Typography.Text>
+                  <Typography.Text>
+                    {selectedStaffingData.reserved_start_date 
+                      ? formatDate(selectedStaffingData.reserved_start_date) 
+                      : 'N/A'}
+                  </Typography.Text>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Tentative Billable Date:</Typography.Text>
+                  <Typography.Text>
+                    {selectedStaffingData.tentative_billable_date 
+                      ? formatDate(selectedStaffingData.tentative_billable_date) 
+                      : 'N/A'}
+                  </Typography.Text>
+                </div>
+              </Col>
+              <Col span={24}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Delivery Director:</Typography.Text>
+                  <Typography.Text>{selectedStaffingData.delivery_director || 'N/A'}</Typography.Text>
+                </div>
+              </Col>
+              <Col span={24}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Previous Project:</Typography.Text>
+                  <Typography.Text>{selectedStaffingData.previous_project || 'N/A'}</Typography.Text>
+                </div>
+              </Col>
+              <Col span={24}>
+                <div className="staffing-detail-item">
+                  <Typography.Text strong>Comments:</Typography.Text>
+                  <Typography.Text>{selectedStaffingData.comments || 'N/A'}</Typography.Text>
+                </div>
+              </Col>
+            </Row>
           </div>
         )}
       </Modal>

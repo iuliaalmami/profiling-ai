@@ -295,3 +295,57 @@
     }
   }
 }
+
+// Staffing Details Modal
+.staffing-details-modal {
+  .staffing-details-content {
+    .staffing-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px;
+      background: #f9f9f9;
+      border-radius: 4px;
+
+      .ant-typography {
+        &:first-child {
+          color: #666;
+          font-size: 12px;
+        }
+
+        &:last-child {
+          color: #262626;
+          font-size: 14px;
+          font-weight: 500;
+        }
+      }
+
+      .ant-tag {
+        align-self: flex-start;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Availability tag updates for new statuses
+.availability-tag {
+  &--tentative {
+    font-weight: 500;
+  }
+
+  &--reserved {
+    font-weight: 500;
+  }
+
+  &--future-billable {
+    font-weight: 500;
+  }
+
+  &--unavailable {
+    font-weight: 500;
+    background-color: #f5f5f5 !important;
+    border-color: #d9d9d9 !important;
+    color: #8c8c8c !important;
+  }
+}
